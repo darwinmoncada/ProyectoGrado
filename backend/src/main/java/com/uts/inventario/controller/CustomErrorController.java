@@ -20,7 +20,7 @@ public class CustomErrorController implements ErrorController {
         
         // Redirige TODOS los errores (404, 403, 500, etc.) a index.html
         // De esta forma React Router puede manejar las rutas de la SPA
-        return "forward:/index.html";
+        return "redirect:/index.html";
     }
 
 }
