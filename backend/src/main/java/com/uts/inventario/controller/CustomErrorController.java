@@ -3,7 +3,6 @@ package com.uts.inventario.controller;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -22,11 +21,6 @@ public class CustomErrorController implements ErrorController {
         // Redirige TODOS los errores (404, 403, 500, etc.) a index.html
         // De esta forma React Router puede manejar las rutas de la SPA
         return "forward:/index.html";
-    }
-
-    @Override
-    public String getErrorPath() {
-        return "/error";
     }
 
 }
