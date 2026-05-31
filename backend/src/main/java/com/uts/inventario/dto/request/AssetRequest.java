@@ -44,4 +44,12 @@ public class AssetRequest {
     private Long areaId;
 
     private Long assignedUserId;
+
+    public Long getAssignedUserId() {
+        return assignedUserId;
+    }
+
+    public void setAssignedUserId(Long assignedUserId) {
+        this.assignedUserId = assignedUserId;
+    }
 }
