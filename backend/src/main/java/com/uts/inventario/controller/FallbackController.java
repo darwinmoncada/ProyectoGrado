@@ -15,8 +15,7 @@ public class FallbackController {
      */
     @GetMapping({
             "/",
-            "/{path:^(?!api|swagger-ui|v3|actuator|static|assets|error).*$}",
-            "/**/{path:^(?!api|swagger-ui|v3|actuator|static|assets|error).*$}"
+            "/{path:^(?!api|swagger-ui|v3|actuator|static|assets|error).*$}"
     })
     public String root() {
         return "forward:/index.html";
