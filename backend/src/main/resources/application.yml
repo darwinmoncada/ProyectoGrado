@@ -65,8 +65,9 @@ springdoc:
 
 logging:
   level:
-    com.uts.inventario: DEBUG
+    com.uts.inventario: INFO
     org.springframework.security: WARN
+    org.springframework.web: WARN
     org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
