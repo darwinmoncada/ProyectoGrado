@@ -34,10 +34,12 @@ spring:
       write-dates-as-timestamps: false
     time-zone: America/Bogota
 
+  mvc:
+    servlet:
+      path: /api/*
+
 server:
   port: 8080
-  servlet:
-    context-path: /api
   error:
     include-message: always
     include-binding-errors: always

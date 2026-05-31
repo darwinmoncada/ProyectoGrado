@@ -10,7 +10,6 @@ RUN npm run build
 FROM maven:3.9-eclipse-temurin-17 AS backend-builder
 WORKDIR /app/backend
 COPY backend/pom.xml ./
-# Descarga dependencias para aprovechar la caché de Docker
 RUN mvn dependency:go-offline -B
 COPY backend/src ./src
 # Incluir el frontend ya construido dentro de los recursos del backend
@@ -20,9 +19,6 @@ RUN mvn clean package -DskipTests
 # === ETAPA 3: Imagen Final de Producción (Servidor Java) ===
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
-# Copiar el JAR del backend generado
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
-
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
