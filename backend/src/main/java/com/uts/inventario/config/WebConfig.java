@@ -9,9 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Mapea las peticiones de la raíz y recursos estáticos para que busquen dentro de la carpeta /static
-        // Esta carpeta es generada por el Dockerfile al compilar el frontend
+        // Sirve los archivos estáticos del frontend compilado
         registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/");
+                .addResourceLocations("classpath:/static/")
+                .setCachePeriod(0); // No cachear para desarrollo
+        
+        // Nota: Spring Security necesita permitir acceso a estos recursos en SecurityConfig
     }
 }
