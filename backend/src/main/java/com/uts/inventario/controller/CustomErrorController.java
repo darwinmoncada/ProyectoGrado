@@ -18,9 +18,16 @@ public class CustomErrorController implements ErrorController {
     public String handleError(HttpServletRequest request) {
         Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         
-        // Redirige TODOS los errores (404, 403, 500, etc.) a index.html
-        // De esta forma React Router puede manejar las rutas de la SPA
-        return "redirect:/index.html";
+        if (status != null) {
+            int statusCode = Integer.parseInt(status.toString());
+            if (statusCode == 404) {
+                // El frontend maneja rutas SPA, no queremos un bucle de redirect.
+                return "forward:/index.html";
+            }
+        }
+
+        // Para otros errores devolvemos una página de error estática.
+        return "forward:/error.html";
     }
 
 }
