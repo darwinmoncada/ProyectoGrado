@@ -1,4 +1,4 @@
-# Maven
+# === MAVEN / JAVA ===
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -8,23 +8,23 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
+.m2/
 *.jar
 *.war
 *.zip
-.m2/
+# Fuerza la inclusión del Maven Wrapper aunque ignores los .jar globales
+!.mvn/wrapper/maven-wrapper.jar
 
-# Node
+# === NODE / FRONTEND ===
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dist/
 build/
-package-lock.json
-yarn.lock
+.vite/
 
-# IDE
+# === IDEs / EDITORES ===
 .vscode/settings.json
 .vscode/launch.json
 .vscode/extensions.json
@@ -32,7 +32,6 @@ yarn.lock
 *.swp
 *.swo
 *~
-.DS_Store
 *.iml
 *.classpath
 *.project
@@ -42,13 +41,13 @@ yarn.lock
 *.sublime-workspace
 *.sublime-project
 
-# Environment
+# === ENTORNO Y SECRETOS ===
 .env
 .env.local
 .env.*.local
 env.txt
 
-# OS
+# === SISTEMA OPERATIVO ===
 .DS_Store
 Thumbs.db
 *.log
@@ -57,44 +56,24 @@ Thumbs.db
 .LSOverride
 ehthumbs.db
 
-# Misc
+# === CACHÉ Y TEMPORALES ===
 *.pid
 *.seed
 *.pid.lock
 .cache
 .parcel-cache
 .eslintcache
+.tmp/
+temp/
+tmp/
 
-# Backend specific
-backend/target/
-backend/.mvn/
-backend/.classpath
-backend/.project
-backend/.settings/
-
-# Frontend specific
-frontend/node_modules/
-frontend/dist/
-frontend/build/
-frontend/.vite/
-frontend/.eslintcache
-frontend/.parcel-cache/
-
-# Project-wide
+# === PROYECTO / HERRAMIENTAS ===
 .claude/
-.git/
 inventario/
-
-# Docker
 .docker/
 
-# Database/Local files
+# === BASES DE DATOS ===
 *.db
 *.sqlite
 *.sqlite3
 *.sql.bak
-
-# Temporary files
-.tmp/
-temp/
-tmp/
