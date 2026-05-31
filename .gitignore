@@ -69,7 +69,6 @@ tmp/
 
 # === PROYECTO / HERRAMIENTAS ===
 .claude/
-inventario/
 .docker/
 
 # === BASES DE DATOS ===
