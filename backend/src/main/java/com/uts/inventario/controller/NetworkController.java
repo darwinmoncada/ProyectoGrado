@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/network")
+@RequestMapping("/api/network")
 @RequiredArgsConstructor
 @Tag(name = "Redes y Comunicaciones", description = "Gestión de dispositivos de red y topología")
 @SecurityRequirement(name = "bearerAuth")

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/assets")
+@RequestMapping("/api/assets")
 @RequiredArgsConstructor
 @Tag(name = "Activos Tecnológicos", description = "Gestión de activos TI")
 @SecurityRequirement(name = "bearerAuth")

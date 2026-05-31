@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/inventory")
+@RequestMapping("/api/inventory")
 @RequiredArgsConstructor
 @Tag(name = "Inventario", description = "Gestión de movimientos de inventario")
 @SecurityRequirement(name = "bearerAuth")
