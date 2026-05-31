@@ -1,4 +1,4 @@
-# === MAVEN / JAVA ===
+# === MAVEN / JAVA (Backend) ===
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -9,25 +9,26 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .m2/
+
+# Bloquear JARs generales pero PERMITIR el Wrapper para Railway
 *.jar
+!.mvn/wrapper/maven-wrapper.jar
 *.war
 *.zip
-# Fuerza la inclusión del Maven Wrapper aunque ignores los .jar globales
-!.mvn/wrapper/maven-wrapper.jar
 
-# === NODE / FRONTEND ===
+# === NODE / VITE / REACT (Frontend) ===
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-dist/
-build/
+
+# Solo ignorar build y dist del frontend para no romper herramientas de Java
+frontend/dist/
+frontend/build/
 .vite/
 
-# === IDEs / EDITORES ===
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
+# === IDEs Y EDITORES ===
+.vscode/
 .idea/
 *.swp
 *.swo
@@ -38,40 +39,29 @@ build/
 *.settings
 .sts4-cache/
 .recommenders/
-*.sublime-workspace
-*.sublime-project
 
-# === ENTORNO Y SECRETOS ===
+# === ENTORNO Y SECRETOS (Railway usa sus propias variables de entorno) ===
 .env
 .env.local
 .env.*.local
 env.txt
 
-# === SISTEMA OPERATIVO ===
+# === SISTEMA OPERATIVO Y TEMPORALES ===
 .DS_Store
 Thumbs.db
 *.log
 *.tmp
-.AppleDouble
-.LSOverride
-ehthumbs.db
-
-# === CACHÉ Y TEMPORALES ===
-*.pid
-*.seed
-*.pid.lock
-.cache
-.parcel-cache
-.eslintcache
 .tmp/
 temp/
 tmp/
+.cache
+.parcel-cache
+.eslintcache
 
-# === PROYECTO / HERRAMIENTAS ===
+# === CONFIGURACIÓN DE PROYECTO ===
 .claude/
-.docker/
 
-# === BASES DE DATOS ===
+# === BASES DE DATOS LOCALES (No subir a producción) ===
 *.db
 *.sqlite
 *.sqlite3
