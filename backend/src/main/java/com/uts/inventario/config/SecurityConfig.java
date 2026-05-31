@@ -46,10 +46,14 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Permitir acceso público a todas las rutas EXCEPTO /api/**
-                .requestMatchers("/api/**").authenticated()
+                // Rutas públicas de autenticación
+                .requestMatchers("/api/auth/**").permitAll()
+                // Rutas administrativas seguras
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().permitAll()  // Permite el frontend y SPA routing
+                // Todas las demás APIs requieren autenticación
+                .requestMatchers("/api/**").authenticated()
+                // Permite el frontend y SPA routing
+                .anyRequest().permitAll()
             )
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
