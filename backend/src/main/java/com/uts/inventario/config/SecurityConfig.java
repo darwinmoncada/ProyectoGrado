@@ -39,6 +39,11 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     private static final String[] PUBLIC_URLS = {
+        "/",
+        "/index.html",
+        "/favicon.ico",
+        "/assets/**",
+        "/static/**",
         "/auth/**",
         "/v3/api-docs/**",
         "/swagger-ui/**",
