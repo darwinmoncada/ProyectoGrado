@@ -48,6 +48,10 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                // Permitir preflight CORS OPTIONS antes que otras reglas (crítico para navegadores)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Rutas públicas de autenticación (login, register, etc) - muy prioritario
+                .requestMatchers("/api/auth/**").permitAll()
                 // Permitir recursos estáticos en ubicaciones comunes (incluye /assets/**)
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                 // Recursos estáticos y SPA adicionales
@@ -59,10 +63,6 @@ public class SecurityConfig {
                     "/assets/**",
                     "/static/**"
                 ).permitAll()
-                // Asegurar explícitamente el login POST (protección adicional contra reglas solapadas)
-                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                // Rutas públicas de autenticación
-                .requestMatchers("/api/auth/**").permitAll()
                 // Rutas administrativas seguras
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Todas las demás APIs requieren autenticación
@@ -91,7 +91,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(allowedOrigins);
+        // Usar allowedOriginPatterns para soportar orígenes dinámicos en producción (Railway, etc)
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

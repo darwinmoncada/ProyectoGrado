@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Autenticación", description = "Endpoints de autenticación y registro")
 public class AuthController {
 
@@ -28,7 +30,9 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
 
+        log.info("Attempting login for username={} from ip={}", request.getUsername(), getClientIp(httpRequest));
         AuthResponse response = authService.login(request, getClientIp(httpRequest));
+        log.info("Login successful for username={}", request.getUsername());
         return ResponseEntity.ok(ApiResponse.success("Sesión iniciada exitosamente", response));
     }
 
