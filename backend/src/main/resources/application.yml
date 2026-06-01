@@ -70,7 +70,7 @@ springdoc:
 logging:
   level:
     com.uts.inventario: INFO
-    org.springframework.security: WARN
+    org.springframework.security: DEBUG
     org.springframework.web: WARN
     org.hibernate.SQL: WARN
   pattern:
