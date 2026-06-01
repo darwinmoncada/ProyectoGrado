@@ -34,7 +34,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
+        // Seguridad defensiva: si no hay header válido, continuar la cadena de filtros
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Protección ante headers mal formados
+        if (authHeader.length() <= 7) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -42,21 +49,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
 
         try {
-            final String username = jwtTokenProvider.extractUsername(jwt);
+            if (jwtTokenProvider == null) {
+                log.warn("JwtTokenProvider is not available");
+            } else if (userDetailsService == null) {
+                log.warn("UserDetailsService is not available");
+            } else {
+                final String username = jwtTokenProvider.extractUsername(jwt);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = null;
+                    try {
+                        userDetails = userDetailsService.loadUserByUsername(username);
+                    } catch (Exception e) {
+                        log.warn("Failed to load user by username {}: {}", username, e.getMessage());
+                    }
 
-                if (jwtTokenProvider.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    if (userDetails != null) {
+                        try {
+                            if (jwtTokenProvider.isTokenValid(jwt, userDetails)) {
+                                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                        userDetails, null, userDetails.getAuthorities()
+                                );
+                                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                                SecurityContextHolder.getContext().setAuthentication(authToken);
+                            }
+                        } catch (Exception e) {
+                            log.warn("Token validation failed for user {}: {}", username, e.getMessage());
+                        }
+                    }
                 }
             }
-        } catch (Exception ex) {
-            log.warn("JWT authentication failed: {}", ex.getMessage());
+        } catch (Throwable ex) {
+            log.warn("Unexpected error in JWT authentication filter", ex);
         }
 
         filterChain.doFilter(request, response);
