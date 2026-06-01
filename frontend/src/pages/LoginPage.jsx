@@ -6,8 +6,8 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ComputerIcon from '@mui/icons-material/Computer';
 import { useAuth } from '../context/AuthContext';
+import logoImg from '../img/Logo-REDES-1.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -46,14 +46,17 @@ export default function LoginPage() {
       <Paper elevation={8} sx={{ p: 4, width: '100%', maxWidth: 420, borderRadius: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
           <Box
+            component="img"
+            src="../img/Logo-REDES-1.png"
+            alt="Logo Sistema de Inventario"
             sx={{
-              width: 64, height: 64, borderRadius: '50%',
-              bgcolor: 'primary.main', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', mb: 2,
+              width: 80,
+              height: 'auto',
+              mb: 2,
+              objectFit: 'contain'
             }}
-          >
-            <ComputerIcon sx={{ color: 'white', fontSize: 36 }} />
-          </Box>
+          />
+          
           <Typography variant="h5" fontWeight={700} color="primary" textAlign="center">
             Sistema de Inventario TI
           </Typography>
