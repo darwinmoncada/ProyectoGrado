@@ -5,6 +5,7 @@ import com.uts.inventario.dto.response.PageResponse;
 import com.uts.inventario.entity.AuditLog;
 import com.uts.inventario.enums.AuditAction;
 import com.uts.inventario.repository.AuditLogRepository;
+import com.uts.inventario.repository.spec.AuditLogSpecification;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +43,7 @@ public class AuditController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
-        Page<AuditLog> result = auditLogRepository.searchLogs(userId, action, entityType, from, to, pageable);
+        Page<AuditLog> result = auditLogRepository.findAll(AuditLogSpecification.searchLogs(userId, action, entityType, from, to), pageable);
         return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
     }
 }

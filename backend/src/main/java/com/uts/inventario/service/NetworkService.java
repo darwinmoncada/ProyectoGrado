@@ -10,6 +10,7 @@ import com.uts.inventario.enums.NetworkStatus;
 import com.uts.inventario.exception.BusinessException;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.*;
+import com.uts.inventario.repository.spec.NetworkDeviceSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,7 +36,7 @@ public class NetworkService {
     private final AuditService auditService;
 
     public PageResponse<NetworkDevice> findAllDevices(String search, NetworkStatus status, Pageable pageable) {
-        Page<NetworkDevice> page = networkDeviceRepository.searchDevices(search, status, pageable);
+        Page<NetworkDevice> page = networkDeviceRepository.findAll(NetworkDeviceSpecification.searchDevices(search, status), pageable);
         return PageResponse.from(page);
     }
 

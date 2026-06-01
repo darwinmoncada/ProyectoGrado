@@ -9,6 +9,7 @@ import com.uts.inventario.enums.MovementType;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.entity.AssetType;
 import com.uts.inventario.repository.*;
+import com.uts.inventario.repository.spec.InventoryMovementSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,7 +35,7 @@ public class InventoryService {
 
     public PageResponse<InventoryMovement> findAll(Long assetId, MovementType type,
                                                     LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        Page<InventoryMovement> page = movementRepository.searchMovements(assetId, type, from, to, pageable);
+        Page<InventoryMovement> page = movementRepository.findAll(InventoryMovementSpecification.searchMovements(assetId, type, from, to), pageable);
         return PageResponse.from(page);
     }
 

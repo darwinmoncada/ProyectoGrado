@@ -9,6 +9,7 @@ import com.uts.inventario.enums.AuditAction;
 import com.uts.inventario.exception.BusinessException;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.*;
+import com.uts.inventario.repository.spec.AssetSpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,7 +35,7 @@ public class AssetService {
 
     public PageResponse<AssetResponse> findAll(String search, AssetStatus status,
                                                 Long areaId, Long typeId, Pageable pageable) {
-        Page<Asset> page = assetRepository.searchAssets(search, status, areaId, typeId, pageable);
+        Page<Asset> page = assetRepository.findAll(AssetSpecification.searchAssets(search, status, areaId, typeId), pageable);
         return PageResponse.from(page.map(this::toResponse));
     }
 

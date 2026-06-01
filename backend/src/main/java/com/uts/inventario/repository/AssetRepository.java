@@ -5,6 +5,7 @@ import com.uts.inventario.enums.AssetStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AssetRepository extends JpaRepository<Asset, Long> {
+public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecificationExecutor<Asset> {
 
     Optional<Asset> findBySerialNumber(String serialNumber);
 
@@ -25,23 +26,7 @@ public interface AssetRepository extends JpaRepository<Asset, Long> {
 
     Page<Asset> findByAssignedUserId(Long userId, Pageable pageable);
 
-    @Query("""
-        SELECT a FROM Asset a
-        WHERE (CAST(:search AS String) IS NULL
-            OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', :search, '%'))
-            OR LOWER(a.codigo) LIKE LOWER(CONCAT('%', :search, '%')))
-        AND (CAST(:#{#status?.name()} AS String) IS NULL OR a.status = :status)
-        AND (:areaId IS NULL OR a.area.id = :areaId)
-        AND (:typeId IS NULL OR a.assetType.id = :typeId)
-        """)
-    Page<Asset> searchAssets(
-        @Param("search") String search,
-        @Param("status") AssetStatus status,
-        @Param("areaId") Long areaId,
-        @Param("typeId") Long typeId,
-        Pageable pageable
-    );
+
 
     long countByStatus(AssetStatus status);
 
