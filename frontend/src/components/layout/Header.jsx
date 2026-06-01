@@ -53,7 +53,7 @@ export default function Header({ drawerWidth, onMenuClick }) {
             sx={{
               height: 35,
               width: 'auto',
-              objectFit: 'contain'
+              objectFit: 'contain',
               ml: 2
             }}
           />
