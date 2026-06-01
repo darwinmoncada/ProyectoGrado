@@ -23,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 
 import java.util.List;
 
@@ -45,20 +46,17 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Recursos estáticos y SPA
+                .authorizeHttpRequests(auth -> auth
+                // Permitir recursos estáticos en ubicaciones comunes (incluye /assets/**)
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                // Recursos estáticos y SPA adicionales
                 .requestMatchers(
-                        "/",
-                        "/index.html",
-                        "/favicon.ico",
-                        "/vite.svg",
-                        "/assets/**",
-                        "/static/**",
-                        "/**/*.js",
-                        "/**/*.css",
-                        "/**/*.svg",
-                        "/**/*.png",
-                        "/**/*.ico"
+                    "/",
+                    "/index.html",
+                    "/favicon.ico",
+                    "/vite.svg",
+                    "/assets/**",
+                    "/static/**"
                 ).permitAll()
                 // Rutas públicas de autenticación
                 .requestMatchers("/api/auth/**").permitAll()
