@@ -107,7 +107,7 @@ export default function LoginPage() {
         </form>
 
         <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
-          Usuario: admin | Contraseña: Admin@123
+          © 2026 UTS - Todos los derechos reservados.
         </Typography>
       </Paper>
     </Box>
