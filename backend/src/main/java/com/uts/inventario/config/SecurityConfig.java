@@ -46,13 +46,27 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Recursos estáticos y SPA
+                .requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/favicon.ico",
+                        "/vite.svg",
+                        "/assets/**",
+                        "/static/**",
+                        "/**/*.js",
+                        "/**/*.css",
+                        "/**/*.svg",
+                        "/**/*.png",
+                        "/**/*.ico"
+                ).permitAll()
                 // Rutas públicas de autenticación
                 .requestMatchers("/api/auth/**").permitAll()
                 // Rutas administrativas seguras
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Todas las demás APIs requieren autenticación
                 .requestMatchers("/api/**").authenticated()
-                // Permite el frontend y SPA routing
+                // Permite el resto (principio de menor privilegio ya aplicado arriba)
                 .anyRequest().permitAll()
             )
             .authenticationProvider(authenticationProvider())
