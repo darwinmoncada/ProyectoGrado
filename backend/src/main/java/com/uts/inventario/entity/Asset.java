@@ -1,6 +1,7 @@
 package com.uts.inventario.entity;
 
 import com.uts.inventario.enums.AssetStatus;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -73,6 +74,7 @@ public class Asset {
     private User createdBy;
 
     @OneToOne(mappedBy = "asset", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private NetworkDevice networkDevice;
 
     @Column(name = "created_at", updatable = false)

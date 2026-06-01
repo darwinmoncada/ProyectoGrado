@@ -1,5 +1,6 @@
 package com.uts.inventario.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -54,6 +55,7 @@ public class User implements UserDetails {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     @Builder.Default
+    @JsonIgnore
     private Set<Role> roles = new HashSet<>();
 
     @Column(name = "created_at", updatable = false)

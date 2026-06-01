@@ -1,6 +1,7 @@
 package com.uts.inventario.entity;
 
 import com.uts.inventario.enums.NetworkStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,6 +22,7 @@ public class NetworkDevice {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "asset_id", unique = true)
+    @JsonBackReference
     private Asset asset;
 
     @Column(name = "ip_address", length = 45)
