@@ -47,8 +47,8 @@ export default function LoginPage() {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
           <Box
             component="img"
-            src="../img/Logo-REDES-1.png"
-            alt="Logo Sistema de Inventario"
+            src={logoImg}
+            alt="Logo REDES"
             sx={{
               width: 80,
               height: 'auto',
