@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box, Typography, Paper, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControl,
@@ -51,10 +51,15 @@ export default function InventoryPage() {
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['movements', page],
     queryFn: () => inventoryService.getMovements({ page, size: 15 }),
   });
+
+  // Cargar datos iniciales al montar el componente
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     defaultValues: { movementType: '', movementDate: '', notes: '', toAreaId: '', assetTypeId: '' },

@@ -62,7 +62,7 @@ function NetworkForm({ assetId, canEdit }) {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const { data: netDevice, isLoading } = useQuery({
+  const { data: netDevice, isLoading, refetch: refetchNetDevice } = useQuery({
     queryKey: ['networkDevice', assetId],
     queryFn: () => networkService.getDeviceByAsset(assetId).catch(() => null),
     retry: false,
@@ -73,6 +73,11 @@ function NetworkForm({ assetId, canEdit }) {
   });
 
   const isDhcp = watch('isDhcp');
+
+  // Cargar dispositivo de red cuando cambia assetId
+  useEffect(() => {
+    refetchNetDevice();
+  }, [assetId]);
 
   useEffect(() => {
     if (netDevice) {
@@ -324,16 +329,28 @@ export default function AssetDetailPage() {
   const { hasRole } = useAuth();
   const [tab, setTab] = useState(0);
 
-  const { data: asset, isLoading, error } = useQuery({
+  const { data: asset, isLoading, error, refetch: refetchAsset } = useQuery({
     queryKey: ['asset', id],
     queryFn: () => assetService.getById(id),
   });
 
-  const { data: movements } = useQuery({
+  const { data: movements, refetch: refetchMovements } = useQuery({
     queryKey: ['movements', id],
     queryFn: () => inventoryService.getByAsset(id),
     enabled: tab === 1,
   });
+
+  // Cargar detalles del activo al montar o cambiar id
+  useEffect(() => {
+    refetchAsset();
+  }, [id]);
+
+  // Cargar movimientos cuando cambia la pestaña
+  useEffect(() => {
+    if (tab === 1) {
+      refetchMovements();
+    }
+  }, [tab]);
 
   if (isLoading) return <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">Error al cargar el activo</Alert>;

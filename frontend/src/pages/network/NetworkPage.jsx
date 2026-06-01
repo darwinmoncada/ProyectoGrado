@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Typography, Paper, Chip, TextField, Tab, Tabs,
   Button, IconButton, Tooltip
@@ -22,10 +22,15 @@ export default function NetworkPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
 
-  const { data: devices, isLoading } = useQuery({
+  const { data: devices, isLoading, refetch: refetchDevices } = useQuery({
     queryKey: ['networkDevices', search, page],
     queryFn: () => networkService.getDevices({ search: search || undefined, page, size: 15 }),
   });
+
+  // Cargar datos iniciales al montar el componente
+  useEffect(() => {
+    refetchDevices();
+  }, []);
 
   const { data: stats } = useQuery({
     queryKey: ['networkStats'],

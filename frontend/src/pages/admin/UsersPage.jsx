@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Box, Typography, Paper, Chip, IconButton, Tooltip, Alert } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import BlockIcon from '@mui/icons-material/Block';
@@ -10,10 +11,15 @@ export default function UsersPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then((r) => r.data.data),
   });
+
+  // Cargar datos iniciales al montar el componente
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const toggleMutation = useMutation({
     mutationFn: (id) => api.patch(`/users/${id}/toggle-active`),

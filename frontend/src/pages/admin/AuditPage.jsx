@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, TextField, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
@@ -12,8 +12,8 @@ const ACTION_COLORS = {
 export default function AuditPage() {
   const [filters, setFilters] = useState({ action: '', entityType: '', page: 0 });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['audit', filters],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['audit', filters.action, filters.entityType, filters.page],
     queryFn: () => api.get('/audit/logs', {
       params: {
         action: filters.action || undefined,
@@ -23,6 +23,11 @@ export default function AuditPage() {
       }
     }).then((r) => r.data.data),
   });
+
+  // Cargar datos iniciales al montar el componente
+  useEffect(() => {
+    refetch();
+  }, []);
 
   const columns = [
     { field: 'id', headerName: '#', width: 60 },
