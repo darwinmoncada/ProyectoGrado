@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box, Button, Chip, Typography, TextField, MenuItem,
   Select, FormControl, InputLabel, IconButton, Tooltip, Paper
@@ -29,8 +29,8 @@ export default function AssetListPage() {
 
   const [filters, setFilters] = useState({ search: '', status: '', page: 0, size: 10 });
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['assets', filters.search, filters.status, filters.page, filters.size],
+  const { data, isLoading } = useQuery({
+    queryKey: ['assets', filters],
     queryFn: () => assetService.getAll({
       search: filters.search || undefined,
       status: filters.status || undefined,
@@ -38,11 +38,6 @@ export default function AssetListPage() {
       size: filters.size,
     }),
   });
-
-  // Cargar datos iniciales al montar el componente
-  useEffect(() => {
-    refetch();
-  }, []);
 
   const deleteMutation = useMutation({
     mutationFn: assetService.delete,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box, Typography, Paper, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, IconButton, Tooltip
@@ -17,15 +17,10 @@ export default function AreasPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const { data: areas, isLoading, refetch } = useQuery({
+  const { data: areas, isLoading } = useQuery({
     queryKey: ['areas'],
     queryFn: () => api.get('/areas').then((r) => r.data.data),
   });
-
-  // Cargar datos iniciales al montar el componente
-  useEffect(() => {
-    refetch();
-  }, []);
 
   const { control, handleSubmit, reset, setValue } = useForm({
     defaultValues: { name: '', description: '', location: '', building: '' }

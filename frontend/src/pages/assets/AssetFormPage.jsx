@@ -32,21 +32,14 @@ export default function AssetFormPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const { data: types, refetch: refetchTypes } = useQuery({ queryKey: ['assetTypes'], queryFn: assetService.getTypes });
-  const { data: areas, refetch: refetchAreas } = useQuery({ queryKey: ['areas'], queryFn: assetService.getAreas });
-  const { data: users, refetch: refetchUsers } = useQuery({ queryKey: ['users'], queryFn: assetService.getUsers });
+  const { data: types } = useQuery({ queryKey: ['assetTypes'], queryFn: assetService.getTypes });
+  const { data: areas } = useQuery({ queryKey: ['areas'], queryFn: assetService.getAreas });
+  const { data: users } = useQuery({ queryKey: ['users'], queryFn: assetService.getUsers });
   const { data: existing } = useQuery({
     queryKey: ['asset', id],
     queryFn: () => assetService.getById(id),
     enabled: isEditing,
   });
-
-  // Cargar catálogos al montar el componente
-  useEffect(() => {
-    refetchTypes();
-    refetchAreas();
-    refetchUsers();
-  }, []);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
