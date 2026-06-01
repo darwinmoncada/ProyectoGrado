@@ -7,7 +7,8 @@ import {
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../context/AuthContext';
-import logoImg from '../img/Logo-REDES-1.png';
+import logoRedesImg from '../img/Logo-REDES-1.png';
+import logoUtsImg from '../img/Logo-UTS-1.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -45,17 +46,37 @@ export default function LoginPage() {
     >
       <Paper elevation={8} sx={{ p: 4, width: '100%', maxWidth: 420, borderRadius: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-          <Box
-            component="img"
-            src={logoImg}
-            alt="Logo REDES"
-            sx={{
-              width: 80,
-              height: 'auto',
-              mb: 2,
-              objectFit: 'contain'
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 2,
+              mb: 2 
             }}
-          />
+          >
+            <Box
+              component="img"
+              src={logoRedesImg}
+              alt="Logo REDES"
+              sx={{
+                width: 80,
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+            <Box
+              component="img"
+              src={logoUtsImg}
+              alt="Logo UTS"
+              sx={{
+                width: 80, 
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+          </Box>
           
           <Typography variant="h5" fontWeight={700} color="primary" textAlign="center">
             Sistema de Inventario TI
