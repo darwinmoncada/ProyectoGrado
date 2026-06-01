@@ -4,10 +4,10 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import logoUts from '../../img/Logo-UTS-1.png'; 
 
 export default function Header({ drawerWidth, onMenuClick }) {
   const { user, logout } = useAuth();
@@ -46,9 +46,17 @@ export default function Header({ drawerWidth, onMenuClick }) {
           <Typography variant="h6" noWrap fontWeight={700}>
             Sistema de Inventario TI
           </Typography>
-          <Typography variant="caption" sx={{ ml: 1, opacity: 0.8 }}>
-            | UTS
-          </Typography>
+          <Box
+            component="img"
+            src={logoUts}
+            alt="Logo UTS"
+            sx={{
+              height: 35,
+              width: 'auto',
+              objectFit: 'contain'
+              ml: 2
+            }}
+          />
         </Box>
 
         {user && (
