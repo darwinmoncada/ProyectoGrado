@@ -59,6 +59,8 @@ public class SecurityConfig {
                     "/assets/**",
                     "/static/**"
                 ).permitAll()
+                // Asegurar explícitamente el login POST (protección adicional contra reglas solapadas)
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // Rutas públicas de autenticación
                 .requestMatchers("/api/auth/**").permitAll()
                 // Rutas administrativas seguras
