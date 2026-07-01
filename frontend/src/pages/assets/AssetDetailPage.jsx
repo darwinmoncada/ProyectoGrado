@@ -22,6 +22,11 @@ const STATUS_COLORS = {
   ACTIVE: 'success', MAINTENANCE: 'warning', RETIRED: 'error', LOST: 'default'
 };
 
+const STATUS_LABELS = {
+  ACTIVE: 'Activo', MAINTENANCE: 'En Mantenimiento',
+  RETIRED: 'Dado de Baja', LOST: 'Pendiente de baja',
+};
+
 const MOVEMENT_LABELS = {
   ENTRY:           'Entrada',
   EXIT:            'Salida',
@@ -348,7 +353,7 @@ export default function AssetDetailPage() {
             Volver
           </Button>
           <Typography variant="h5" fontWeight={700}>{asset?.name}</Typography>
-          <Chip label={asset?.statusLabel} color={STATUS_COLORS[asset?.status]} />
+          <Chip label={STATUS_LABELS[asset?.status] || asset?.statusLabel || asset?.status} color={STATUS_COLORS[asset?.status]} />
         </Box>
         {canEdit && (
           <Button variant="contained" startIcon={<EditIcon />}

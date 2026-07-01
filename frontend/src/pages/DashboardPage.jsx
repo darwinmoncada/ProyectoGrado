@@ -1,6 +1,5 @@
 import { Grid, Card, CardContent, Typography, Box, Skeleton } from '@mui/material';
 import ComputerIcon from '@mui/icons-material/Computer';
-import BuildIcon from '@mui/icons-material/Build';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -13,7 +12,7 @@ import { assetService } from '../services/assetService';
 import { networkService } from '../services/networkService';
 import { inventoryService } from '../services/inventoryService';
 
-const COLORS = ['#1565C0', '#0288D1', '#F57F17', '#C62828', '#2E7D32'];
+const COLORS = ['#1565C0', '#F57F17'];
 
 function StatCard({ title, value, icon, color, loading }) {
   return (
@@ -74,15 +73,6 @@ export default function DashboardPage() {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Activos en Mantenimiento"
-            value={assetStats?.maintenance ?? '—'}
-            icon={<BuildIcon sx={{ color: '#F57F17', fontSize: 32 }} />}
-            color="#F57F17"
-            loading={loadingAssets}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
             title="Dispositivos Online"
             value={networkStats?.online ?? '—'}
             icon={<WifiIcon sx={{ color: '#2E7D32', fontSize: 32 }} />}
@@ -129,9 +119,7 @@ export default function DashboardPage() {
                     <Pie
                       data={[
                         { name: 'Activos', value: assetStats.active },
-                        { name: 'Mantenimiento', value: assetStats.maintenance },
-                        { name: 'Baja', value: assetStats.retired },
-                        { name: 'Perdidos', value: assetStats.lost },
+                        { name: 'Pendiente de baja', value: assetStats.lost },
                       ]}
                       cx="50%"
                       cy="50%"

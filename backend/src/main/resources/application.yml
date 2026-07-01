@@ -3,9 +3,9 @@ spring:
     name: inventario-activos-uts
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/inventario_uts
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:1245}
+    url: ${DB_URL:${DATABASE_URL:jdbc:postgresql://localhost:5432/inventario_uts}}
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

@@ -59,7 +59,7 @@ docker compose up --build
 
 ## Backend
 
-El backend usa Java 21 y Maven. El `Dockerfile` construye la aplicación en una etapa separada y luego ejecuta el JAR en un contenedor ligero.
+El backend usa Java 25 y Maven. El `Dockerfile` construye la aplicación en una etapa separada y luego ejecuta el JAR en un contenedor ligero.
 
 ### Comandos útiles
 

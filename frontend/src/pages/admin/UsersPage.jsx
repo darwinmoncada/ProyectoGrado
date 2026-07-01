@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, Chip, IconButton, Tooltip, Alert } from '@mui/material';
+import { Box, Typography, Paper, Chip, IconButton, Tooltip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -61,9 +61,6 @@ export default function UsersPage() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} mb={3}>Gestión de Usuarios</Typography>
-      <Alert severity="info" sx={{ mb: 2 }}>
-        Para registrar nuevos usuarios, use el endpoint POST /api/auth/register con rol ADMIN.
-      </Alert>
       <Paper>
         <DataGrid
           rows={users || []}

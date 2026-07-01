@@ -130,9 +130,8 @@ export default function AssetFormPage() {
                     <InputLabel>Estado *</InputLabel>
                     <Select {...field} label="Estado *">
                       <MenuItem value="ACTIVE">Activo</MenuItem>
-                      <MenuItem value="MAINTENANCE">Mantenimiento</MenuItem>
-                      <MenuItem value="RETIRED">Dado de Baja</MenuItem>
-                      <MenuItem value="LOST">Perdido</MenuItem>
+                      <MenuItem value="RETIRED">Baja</MenuItem>
+                      <MenuItem value="LOST">Pendiente de baja</MenuItem>
                     </Select>
                   </FormControl>
                 )} />

@@ -35,7 +35,7 @@ const TYPE_COLORS = {
 
 const STATUS_LABELS = {
   ACTIVE: 'Activo', MAINTENANCE: 'En Mantenimiento',
-  RETIRED: 'Dado de Baja', LOST: 'Perdido',
+  RETIRED: 'Dado de Baja', LOST: 'Pendiente de baja',
 };
 
 export default function InventoryPage() {

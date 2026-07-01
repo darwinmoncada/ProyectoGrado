@@ -7,7 +7,7 @@ COPY frontend ./
 RUN npm run build
 
 # Etapa 2: Compilar el backend y empacar los recursos del frontend
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:17-jdk-alpine AS build
 WORKDIR /app
 COPY backend/pom.xml ./
 COPY backend/src ./src
@@ -16,7 +16,7 @@ RUN apk add --no-cache maven
 RUN mvn clean package -DskipTests
 
 # Etapa 3: Imagen de ejecución
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=build /app/target/*.jar app.jar

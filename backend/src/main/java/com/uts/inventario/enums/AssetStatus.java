@@ -4,7 +4,7 @@ public enum AssetStatus {
     ACTIVE("Activo"),
     MAINTENANCE("En Mantenimiento"),
     RETIRED("Dado de Baja"),
-    LOST("Perdido");
+    LOST("Pendiente de baja");
 
     private final String label;
 
