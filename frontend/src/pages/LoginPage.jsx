@@ -84,6 +84,7 @@ export default function LoginPage() {
           <Typography variant="body2" color="text.secondary" textAlign="center">
             Unidades Tecnológicas de Santander
           </Typography>
+          
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -133,6 +134,27 @@ export default function LoginPage() {
         <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
           © 2026 UTS - Todos los derechos reservados.
         </Typography>
+        <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 2,
+              mb: 2 
+            }}
+          >
+            <Box
+              component="img"
+              src={logoUtsImg}
+              alt="Logo UTS"
+              sx={{
+                width: 80, 
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+          </Box>
       </Paper>
     </Box>
   );
