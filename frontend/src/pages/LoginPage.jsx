@@ -53,6 +53,7 @@ export default function LoginPage() {
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: 2,
+              mt: 2,
               mb: 2 
             }}
           >
