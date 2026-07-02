@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import logoUts from '../../img/Logo-UTS-1.png'; 
-import logoRedesImg from '../../img/Logo-Redes.png'; // Asegúrate de tener esta ruta correcta
+import logoRedesImg from '../../img/Logo-REDES-1.png'; // Asegúrate de tener esta ruta correcta
 
 export default function Header({ drawerWidth, onMenuClick }) {
   const { user, logout } = useAuth();
