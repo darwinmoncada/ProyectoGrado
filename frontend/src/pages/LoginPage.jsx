@@ -131,6 +131,7 @@ export default function LoginPage() {
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: 2,
+              mt: 2,
               mb: 2 
             }}
           >
@@ -140,7 +141,6 @@ export default function LoginPage() {
               alt="Logo UTS"
               sx={{
                 width: 80, 
-                top: 10,
                 height: 'auto',
                 objectFit: 'contain'
               }}
