@@ -66,16 +66,6 @@ export default function LoginPage() {
                 objectFit: 'contain'
               }}
             />
-            <Box
-              component="img"
-              src={logoUtsImg}
-              alt="Logo UTS"
-              sx={{
-                width: 80, 
-                height: 'auto',
-                objectFit: 'contain'
-              }}
-            />
           </Box>
           
           <Typography variant="h5" fontWeight={700} color="primary" textAlign="center">
