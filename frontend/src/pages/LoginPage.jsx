@@ -140,6 +140,7 @@ export default function LoginPage() {
               alt="Logo UTS"
               sx={{
                 width: 80, 
+                top: 10,
                 height: 'auto',
                 objectFit: 'contain'
               }}
