@@ -73,7 +73,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, onClose }) {
           </ListItem>
         ))}
 
-        {hasRole(['ROLE_ADMIN']) && (
+        {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN']) && (
           <>
             <Divider sx={{ my: 1 }} />
             <ListItem disablePadding>

@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/audit")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
 @Tag(name = "Auditoría", description = "Logs de auditoría del sistema")
 @SecurityRequirement(name = "bearerAuth")
 public class AuditController {

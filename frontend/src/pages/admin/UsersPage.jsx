@@ -18,15 +18,19 @@ import * as yup from 'yup';
 import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 
-// ID del Administrador Original del sistema (sembrado en la migración/DataInitializer).
-// Solo este usuario puede asignar el rol de Administrador o tocar su propia cuenta protegida.
-const SUPER_ADMIN_ID = 1;
-
 const ALL_ROLE_OPTIONS = [
+  { value: 'ROLE_SUPERADMIN', label: 'Super Administrador' },
   { value: 'ROLE_ADMIN', label: 'Administrador' },
   { value: 'ROLE_TECNICO', label: 'Técnico' },
   { value: 'ROLE_USUARIO', label: 'Usuario Estándar' },
 ];
+
+const ROLE_CHIP_COLOR = {
+  ROLE_SUPERADMIN: 'secondary',
+  ROLE_ADMIN: 'error',
+  ROLE_TECNICO: 'warning',
+  ROLE_USUARIO: 'default',
+};
 
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
@@ -75,13 +79,13 @@ const emptyFormValues = {
 export default function UsersPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, hasRole } = useAuth();
 
   const currentUserId = currentUser?.userId;
-  const isSuperAdmin = currentUserId === SUPER_ADMIN_ID;
+  const isSuperAdmin = hasRole(['ROLE_SUPERADMIN']);
   const roleOptions = isSuperAdmin
     ? ALL_ROLE_OPTIONS
-    : ALL_ROLE_OPTIONS.filter((opt) => opt.value !== 'ROLE_ADMIN');
+    : ALL_ROLE_OPTIONS.filter((opt) => opt.value !== 'ROLE_SUPERADMIN' && opt.value !== 'ROLE_ADMIN');
   const allowedRoleValues = roleOptions.map((opt) => opt.value);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -178,10 +182,10 @@ export default function UsersPage() {
     setFormOpen(true);
   };
 
-  // Jerarquía de protección: nadie salvo el propio SuperAdmin (ID 1) puede tocar su cuenta,
+  // Jerarquía de protección: nadie salvo un ROLE_SUPERADMIN puede tocar cuentas ROLE_SUPERADMIN,
   // y ningún usuario puede desactivarse a sí mismo.
   function getRowRestriction(row) {
-    if (row.id === SUPER_ADMIN_ID && !isSuperAdmin) return 'super-admin';
+    if (row.roles?.includes('ROLE_SUPERADMIN') && !isSuperAdmin) return 'super-admin';
     if (row.id === currentUserId) return 'self';
     return null;
   }
@@ -198,7 +202,7 @@ export default function UsersPage() {
         <Box display="flex" gap={0.5} flexWrap="wrap">
           {row.roles?.map((r) => (
             <Chip key={r} label={r?.replace('ROLE_', '')} size="small"
-              color={r === 'ROLE_ADMIN' ? 'error' : r === 'ROLE_TECNICO' ? 'warning' : 'default'} />
+              color={ROLE_CHIP_COLOR[r] || 'default'} />
           ))}
         </Box>
       )
@@ -217,15 +221,15 @@ export default function UsersPage() {
         const resetDisabled = restriction === 'super-admin';
 
         const editTooltip = restriction === 'super-admin'
-          ? 'No se puede editar al Administrador Original del sistema'
+          ? 'No se puede editar a un Super Administrador'
           : restriction === 'self'
             ? 'No puedes editar tu propio usuario desde aquí'
             : 'Editar';
         const resetTooltip = restriction === 'super-admin'
-          ? 'No se puede restablecer la contraseña del Administrador Original'
+          ? 'No se puede restablecer la contraseña de un Super Administrador'
           : 'Restablecer Contraseña';
         const toggleTooltip = restriction === 'super-admin'
-          ? 'No se puede cambiar el estado del Administrador Original'
+          ? 'No se puede cambiar el estado de un Super Administrador'
           : restriction === 'self'
             ? 'No puedes desactivar tu propia cuenta'
             : (row.isActive ? 'Desactivar' : 'Activar');

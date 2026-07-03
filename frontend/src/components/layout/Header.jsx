@@ -21,12 +21,14 @@ export default function Header({ drawerWidth, onMenuClick }) {
   };
 
   const getRoleColor = (roles) => {
+    if (roles?.includes('ROLE_SUPERADMIN')) return 'secondary';
     if (roles?.includes('ROLE_ADMIN')) return 'error';
     if (roles?.includes('ROLE_TECNICO')) return 'warning';
     return 'default';
   };
 
   const getRoleLabel = (roles) => {
+    if (roles?.includes('ROLE_SUPERADMIN')) return 'Super Administrador';
     if (roles?.includes('ROLE_ADMIN')) return 'Administrador';
     if (roles?.includes('ROLE_TECNICO')) return 'Técnico';
     return 'Usuario';

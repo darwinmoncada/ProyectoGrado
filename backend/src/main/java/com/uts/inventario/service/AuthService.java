@@ -89,8 +89,9 @@ public class AuthService {
                     .orElseThrow(() -> new BusinessException("Rol por defecto no encontrado")));
         }
 
-        if (roleNames.contains(RoleName.ROLE_ADMIN) && !SecurityUtils.isSuperAdmin()) {
-            throw new BusinessException("Solo el Administrador Original del sistema puede asignar el rol ROLE_ADMIN");
+        boolean requestsElevatedRole = roleNames.contains(RoleName.ROLE_ADMIN) || roleNames.contains(RoleName.ROLE_SUPERADMIN);
+        if (requestsElevatedRole && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("No tienes permisos para asignar este rol");
         }
 
         Set<Role> roles = new HashSet<>();

@@ -57,7 +57,7 @@ public class NetworkController {
     }
 
     @PostMapping("/devices")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Registrar o actualizar dispositivo de red")
     public ResponseEntity<ApiResponse<NetworkDevice>> createOrUpdate(
             @Valid @RequestBody NetworkDeviceRequest request,
@@ -68,7 +68,7 @@ public class NetworkController {
     }
 
     @DeleteMapping("/devices/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Eliminar configuración de red")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Long id,
@@ -79,7 +79,7 @@ public class NetworkController {
     }
 
     @PatchMapping("/devices/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Actualizar estado de un dispositivo de red")
     public ResponseEntity<ApiResponse<NetworkDevice>> updateStatus(
             @PathVariable Long id,
@@ -102,7 +102,7 @@ public class NetworkController {
     }
 
     @PostMapping("/topology")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Crear enlace entre dos dispositivos de red")
     public ResponseEntity<ApiResponse<NetworkTopology>> createLink(
             @RequestParam Long sourceId,
@@ -115,7 +115,7 @@ public class NetworkController {
     }
 
     @DeleteMapping("/topology/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Eliminar enlace de topología")
     public ResponseEntity<ApiResponse<Void>> deleteLink(@PathVariable Long id) {
         networkService.deleteTopologyLink(id);

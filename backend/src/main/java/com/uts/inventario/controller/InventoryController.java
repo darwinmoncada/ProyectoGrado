@@ -68,7 +68,7 @@ public class InventoryController {
     }
 
     @PostMapping("/movements")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Registrar movimiento de inventario")
     public ResponseEntity<ApiResponse<InventoryMovement>> registerMovement(
             @Valid @RequestBody InventoryMovementRequest request,

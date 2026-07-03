@@ -37,8 +37,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Registrar nuevo usuario (solo ADMIN)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @Operation(summary = "Registrar nuevo usuario (solo ADMIN o SUPERADMIN)")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
             @Valid @RequestBody RegisterRequest request) {
 

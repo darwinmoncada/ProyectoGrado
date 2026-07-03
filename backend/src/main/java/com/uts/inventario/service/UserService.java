@@ -47,8 +47,8 @@ public class UserService {
         User user = findUserOrThrow(id);
         boolean requesterIsSuperAdmin = SecurityUtils.isSuperAdmin();
 
-        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !requesterIsSuperAdmin) {
-            throw new BusinessException("No está permitido modificar al Administrador Original del sistema");
+        if (SecurityUtils.isSuperAdmin(user) && !requesterIsSuperAdmin) {
+            throw new BusinessException("No está permitido modificar a un Super Administrador");
         }
 
         if (!user.getUsername().equals(request.getUsername())
@@ -77,8 +77,8 @@ public class UserService {
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User user = findUserOrThrow(id);
 
-        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !SecurityUtils.isSuperAdmin()) {
-            throw new BusinessException("No está permitido restablecer la contraseña del Administrador Original del sistema");
+        if (SecurityUtils.isSuperAdmin(user) && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("No está permitido restablecer la contraseña de un Super Administrador");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -92,17 +92,18 @@ public class UserService {
         if (id.equals(SecurityUtils.getCurrentUserId())) {
             throw new BusinessException("No puedes desactivar tu propia cuenta");
         }
-        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !SecurityUtils.isSuperAdmin()) {
-            throw new BusinessException("No está permitido cambiar el estado del Administrador Original del sistema");
+        if (SecurityUtils.isSuperAdmin(user) && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("No está permitido cambiar el estado de un Super Administrador");
         }
 
         user.setIsActive(!user.getIsActive());
         return toResponse(userRepository.save(user));
     }
 
-    private Set<Role> resolveRoles(Set<RoleName> roleNames, boolean allowSuperAdminRole) {
-        if (roleNames.contains(RoleName.ROLE_ADMIN) && !allowSuperAdminRole) {
-            throw new BusinessException("Solo el Administrador Original del sistema puede asignar el rol ROLE_ADMIN");
+    private Set<Role> resolveRoles(Set<RoleName> roleNames, boolean allowElevatedRoles) {
+        boolean requestsElevatedRole = roleNames.contains(RoleName.ROLE_ADMIN) || roleNames.contains(RoleName.ROLE_SUPERADMIN);
+        if (requestsElevatedRole && !allowElevatedRoles) {
+            throw new BusinessException("No tienes permisos para asignar este rol");
         }
 
         Set<Role> roles = new HashSet<>();

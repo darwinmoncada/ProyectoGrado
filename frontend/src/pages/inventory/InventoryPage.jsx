@@ -169,7 +169,7 @@ export default function InventoryPage() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" fontWeight={700}>Control de Inventario</Typography>
-        {hasRole(['ROLE_ADMIN', 'ROLE_TECNICO']) && (
+        {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN', 'ROLE_TECNICO']) && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
             Registrar Movimiento
           </Button>

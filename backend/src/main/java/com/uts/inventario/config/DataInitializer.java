@@ -27,33 +27,33 @@ public class DataInitializer {
     CommandLineRunner initUsers() {
         return args -> {
             // Crear roles si no existen (por si Flyway no los insertó)
-            ensureRole(RoleName.ROLE_ADMIN, "Administrador con acceso total al sistema");
+            Role superAdminRole = ensureRole(RoleName.ROLE_SUPERADMIN, "Super administrador con control total del sistema");
+            ensureRole(RoleName.ROLE_ADMIN, "Administrador con acceso al sistema");
             ensureRole(RoleName.ROLE_TECNICO, "Técnico de soporte");
             ensureRole(RoleName.ROLE_USUARIO, "Usuario estándar");
 
-            // Actualizar contraseña del admin (siempre re-codifica al arrancar)
+            // Sembrar/actualizar el usuario admin como ROLE_SUPERADMIN (siempre re-codifica la contraseña al arrancar)
             userRepository.findByUsername("admin").ifPresentOrElse(
                 admin -> {
                     admin.setPassword(passwordEncoder.encode("Admin@123"));
                     admin.setIsActive(true);
+                    admin.setRoles(Set.of(superAdminRole));
                     userRepository.save(admin);
-                    log.info("✓ Contraseña del admin actualizada correctamente");
+                    log.info("✓ Usuario admin actualizado (rol ROLE_SUPERADMIN, contraseña reestablecida)");
                 },
                 () -> {
                     // Si no existe el usuario admin, crearlo
-                    Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
-                            .orElseThrow();
                     User admin = User.builder()
                             .username("admin")
                             .email("admin@uts.edu.co")
                             .password(passwordEncoder.encode("Admin@123"))
                             .fullName("Administrador del Sistema")
                             .phone("6076543210")
-                            .roles(Set.of(adminRole))
+                            .roles(Set.of(superAdminRole))
                             .isActive(true)
                             .build();
                     userRepository.save(admin);
-                    log.info("✓ Usuario admin creado: admin / Admin@123");
+                    log.info("✓ Usuario admin creado con rol ROLE_SUPERADMIN: admin / Admin@123");
                 }
             );
 
@@ -66,8 +66,8 @@ public class DataInitializer {
         };
     }
 
-    private void ensureRole(RoleName name, String description) {
-        roleRepository.findByName(name).orElseGet(() -> {
+    private Role ensureRole(RoleName name, String description) {
+        return roleRepository.findByName(name).orElseGet(() -> {
             Role role = Role.builder().name(name).description(description).build();
             return roleRepository.save(role);
         });

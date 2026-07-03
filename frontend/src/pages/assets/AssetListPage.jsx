@@ -176,14 +176,14 @@ export default function AssetListPage() {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          {hasRole(['ROLE_ADMIN', 'ROLE_TECNICO']) && (
+          {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN', 'ROLE_TECNICO']) && (
             <Tooltip title="Editar">
               <IconButton size="small" onClick={() => navigate(`/assets/${row.id}/edit`)}>
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
-          {hasRole(['ROLE_ADMIN']) && (
+          {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN']) && (
             <Tooltip title="Eliminar">
               <IconButton
                 size="small"
@@ -215,7 +215,7 @@ export default function AssetListPage() {
           >
             Exportar PDF
           </Button>
-          {hasRole(['ROLE_ADMIN', 'ROLE_TECNICO']) && (
+          {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN', 'ROLE_TECNICO']) && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/assets/new')}>
               Nuevo Activo
             </Button>

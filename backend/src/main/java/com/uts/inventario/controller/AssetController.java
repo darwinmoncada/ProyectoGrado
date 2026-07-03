@@ -64,7 +64,7 @@ public class AssetController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Registrar nuevo activo")
     public ResponseEntity<ApiResponse<AssetResponse>> create(
             @Valid @RequestBody AssetRequest request,
@@ -76,7 +76,7 @@ public class AssetController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Actualizar activo existente")
     public ResponseEntity<ApiResponse<AssetResponse>> update(
             @PathVariable Long id,
@@ -88,8 +88,8 @@ public class AssetController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Eliminar activo (solo ADMIN)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @Operation(summary = "Eliminar activo (solo ADMIN o SUPERADMIN)")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Long id,
             HttpServletRequest httpRequest) {
@@ -99,7 +99,7 @@ public class AssetController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Cambiar estado de un activo")
     public ResponseEntity<ApiResponse<AssetResponse>> changeStatus(
             @PathVariable Long id,

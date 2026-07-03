@@ -343,7 +343,7 @@ export default function AssetDetailPage() {
   if (isLoading) return <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">Error al cargar el activo</Alert>;
 
-  const canEdit = hasRole(['ROLE_ADMIN', 'ROLE_TECNICO']);
+  const canEdit = hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN', 'ROLE_TECNICO']);
 
   return (
     <Box>

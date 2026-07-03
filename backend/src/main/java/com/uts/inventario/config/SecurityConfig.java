@@ -50,8 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 // Permitir preflight CORS OPTIONS antes que otras reglas (crítico para navegadores)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Registro de usuarios: solo ADMIN puede crear cuentas (refuerza el @PreAuthorize del controller)
-                .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
+                // Registro de usuarios: solo ADMIN/SUPERADMIN puede crear cuentas (refuerza el @PreAuthorize del controller)
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").hasAnyRole("ADMIN", "SUPERADMIN")
                 // Rutas públicas de autenticación (login, etc) - muy prioritario
                 .requestMatchers("/api/auth/**").permitAll()
                 // Permitir recursos estáticos en ubicaciones comunes (incluye /assets/**)
@@ -66,7 +66,7 @@ public class SecurityConfig {
                     "/static/**"
                 ).permitAll()
                 // Rutas administrativas seguras
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 // Todas las demás APIs requieren autenticación
                 .requestMatchers("/api/**").authenticated()
                 // Permite el resto (principio de menor privilegio ya aplicado arriba)

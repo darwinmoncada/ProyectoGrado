@@ -35,7 +35,7 @@ public class UserController {
     // ---- Usuarios ----
 
     @GetMapping("/users")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Listar usuarios")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers(
             @RequestParam(defaultValue = "false") boolean includeInactive) {
@@ -43,14 +43,14 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN', 'TECNICO')")
     @Operation(summary = "Obtener usuario por ID")
     public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUser(id)));
     }
 
     @PutMapping("/users/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Actualizar usuario (solo ADMIN, no aplica a administradores)")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @PatchMapping("/users/{id}/password")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Restablecer contraseña de un usuario (solo ADMIN, no aplica a administradores)")
     public ResponseEntity<ApiResponse<String>> resetPassword(
             @PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
@@ -67,7 +67,7 @@ public class UserController {
     }
 
     @PatchMapping("/users/{id}/toggle-active")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Activar/desactivar usuario")
     public ResponseEntity<ApiResponse<UserResponse>> toggleUser(@PathVariable Long id) {
         UserResponse response = userService.toggleActive(id);
@@ -92,7 +92,7 @@ public class UserController {
     }
 
     @PostMapping("/areas")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Crear nueva área")
     public ResponseEntity<ApiResponse<Area>> createArea(@RequestBody Area area) {
         area.setIsActive(true);
@@ -100,7 +100,7 @@ public class UserController {
     }
 
     @PutMapping("/areas/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Actualizar área")
     public ResponseEntity<ApiResponse<Area>> updateArea(@PathVariable Long id, @RequestBody Area request) {
         Area area = areaRepository.findById(id)
@@ -130,7 +130,7 @@ public class UserController {
     }
 
     @PostMapping("/asset-types")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
     @Operation(summary = "Crear tipo de activo")
     public ResponseEntity<ApiResponse<AssetType>> createAssetType(@RequestBody AssetType assetType) {
         return ResponseEntity.ok(ApiResponse.success("Tipo creado", assetTypeRepository.save(assetType)));
