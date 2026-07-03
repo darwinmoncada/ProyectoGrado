@@ -11,6 +11,7 @@ import com.uts.inventario.exception.BusinessException;
 import com.uts.inventario.repository.RoleRepository;
 import com.uts.inventario.repository.UserRepository;
 import com.uts.inventario.security.JwtTokenProvider;
+import com.uts.inventario.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -88,8 +89,8 @@ public class AuthService {
                     .orElseThrow(() -> new BusinessException("Rol por defecto no encontrado")));
         }
 
-        if (roleNames.contains(RoleName.ROLE_ADMIN)) {
-            throw new BusinessException("No está permitido asignar el rol ROLE_ADMIN al crear usuarios");
+        if (roleNames.contains(RoleName.ROLE_ADMIN) && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("Solo el Administrador Original del sistema puede asignar el rol ROLE_ADMIN");
         }
 
         Set<Role> roles = new HashSet<>();

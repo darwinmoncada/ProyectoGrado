@@ -10,6 +10,7 @@ import com.uts.inventario.exception.BusinessException;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.RoleRepository;
 import com.uts.inventario.repository.UserRepository;
+import com.uts.inventario.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -44,9 +45,10 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = findUserOrThrow(id);
+        boolean requesterIsSuperAdmin = SecurityUtils.isSuperAdmin();
 
-        if (isAdmin(user)) {
-            throw new BusinessException("No está permitido editar un usuario administrador desde este módulo");
+        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !requesterIsSuperAdmin) {
+            throw new BusinessException("No está permitido modificar al Administrador Original del sistema");
         }
 
         if (!user.getUsername().equals(request.getUsername())
@@ -65,7 +67,7 @@ public class UserService {
         user.setDocumentNumber(request.getDocumentNumber());
 
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
-            user.setRoles(resolveRoles(request.getRoles()));
+            user.setRoles(resolveRoles(request.getRoles(), requesterIsSuperAdmin));
         }
 
         return toResponse(userRepository.save(user));
@@ -75,8 +77,8 @@ public class UserService {
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User user = findUserOrThrow(id);
 
-        if (isAdmin(user)) {
-            throw new BusinessException("No está permitido restablecer la contraseña de un administrador desde este módulo");
+        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("No está permitido restablecer la contraseña del Administrador Original del sistema");
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -86,13 +88,21 @@ public class UserService {
     @Transactional
     public UserResponse toggleActive(Long id) {
         User user = findUserOrThrow(id);
+
+        if (id.equals(SecurityUtils.getCurrentUserId())) {
+            throw new BusinessException("No puedes desactivar tu propia cuenta");
+        }
+        if (SecurityUtils.SUPER_ADMIN_ID.equals(user.getId()) && !SecurityUtils.isSuperAdmin()) {
+            throw new BusinessException("No está permitido cambiar el estado del Administrador Original del sistema");
+        }
+
         user.setIsActive(!user.getIsActive());
         return toResponse(userRepository.save(user));
     }
 
-    private Set<Role> resolveRoles(Set<RoleName> roleNames) {
-        if (roleNames.contains(RoleName.ROLE_ADMIN)) {
-            throw new BusinessException("No está permitido asignar el rol ROLE_ADMIN");
+    private Set<Role> resolveRoles(Set<RoleName> roleNames, boolean allowSuperAdminRole) {
+        if (roleNames.contains(RoleName.ROLE_ADMIN) && !allowSuperAdminRole) {
+            throw new BusinessException("Solo el Administrador Original del sistema puede asignar el rol ROLE_ADMIN");
         }
 
         Set<Role> roles = new HashSet<>();
@@ -102,10 +112,6 @@ public class UserService {
             roles.add(role);
         }
         return roles;
-    }
-
-    private boolean isAdmin(User user) {
-        return user.getRoles().stream().anyMatch(role -> role.getName() == RoleName.ROLE_ADMIN);
     }
 
     private User findUserOrThrow(Long id) {

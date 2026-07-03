@@ -16,10 +16,14 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { userService } from '../../services/userService';
+import { useAuth } from '../../context/AuthContext';
 
-// Por seguridad, este módulo solo permite asignar roles no administrativos.
-// La creación/edición de administradores no está disponible desde la UI.
-const ROLE_OPTIONS = [
+// ID del Administrador Original del sistema (sembrado en la migración/DataInitializer).
+// Solo este usuario puede asignar el rol de Administrador o tocar su propia cuenta protegida.
+const SUPER_ADMIN_ID = 1;
+
+const ALL_ROLE_OPTIONS = [
+  { value: 'ROLE_ADMIN', label: 'Administrador' },
   { value: 'ROLE_TECNICO', label: 'Técnico' },
   { value: 'ROLE_USUARIO', label: 'Usuario Estándar' },
 ];
@@ -27,27 +31,33 @@ const ROLE_OPTIONS = [
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
 
-const baseFields = {
-  fullName: yup.string().trim().required('El nombre completo es obligatorio').max(100, 'Máximo 100 caracteres'),
-  username: yup.string().trim().required('El usuario es obligatorio')
-    .min(4, 'Mínimo 4 caracteres').max(50, 'Máximo 50 caracteres')
-    .matches(USERNAME_REGEX, 'Solo letras, números, puntos, guiones y guiones bajos'),
-  email: yup.string().trim().required('El correo es obligatorio').email('Correo electrónico inválido'),
-  phone: yup.string().max(20, 'Máximo 20 caracteres').nullable(),
-  documentNumber: yup.string().max(20, 'Máximo 20 caracteres').nullable(),
-  role: yup.string().required('El rol es obligatorio').oneOf(['ROLE_TECNICO', 'ROLE_USUARIO'], 'Rol inválido'),
-};
+function buildBaseFields(allowedRoleValues) {
+  return {
+    fullName: yup.string().trim().required('El nombre completo es obligatorio').max(100, 'Máximo 100 caracteres'),
+    username: yup.string().trim().required('El usuario es obligatorio')
+      .min(4, 'Mínimo 4 caracteres').max(50, 'Máximo 50 caracteres')
+      .matches(USERNAME_REGEX, 'Solo letras, números, puntos, guiones y guiones bajos'),
+    email: yup.string().trim().required('El correo es obligatorio').email('Correo electrónico inválido'),
+    phone: yup.string().max(20, 'Máximo 20 caracteres').nullable(),
+    documentNumber: yup.string().max(20, 'Máximo 20 caracteres').nullable(),
+    role: yup.string().required('El rol es obligatorio').oneOf(allowedRoleValues, 'Rol inválido'),
+  };
+}
 
-const createSchema = yup.object({
-  ...baseFields,
-  password: yup.string().required('La contraseña es obligatoria')
-    .min(8, 'Mínimo 8 caracteres')
-    .matches(PASSWORD_REGEX, 'Debe incluir mayúsculas, minúsculas, números y un carácter especial'),
-  confirmPassword: yup.string().required('Confirma la contraseña')
-    .oneOf([yup.ref('password')], 'Las contraseñas no coinciden'),
-});
+function buildCreateSchema(allowedRoleValues) {
+  return yup.object({
+    ...buildBaseFields(allowedRoleValues),
+    password: yup.string().required('La contraseña es obligatoria')
+      .min(8, 'Mínimo 8 caracteres')
+      .matches(PASSWORD_REGEX, 'Debe incluir mayúsculas, minúsculas, números y un carácter especial'),
+    confirmPassword: yup.string().required('Confirma la contraseña')
+      .oneOf([yup.ref('password')], 'Las contraseñas no coinciden'),
+  });
+}
 
-const editSchema = yup.object(baseFields);
+function buildEditSchema(allowedRoleValues) {
+  return yup.object(buildBaseFields(allowedRoleValues));
+}
 
 const resetPasswordSchema = yup.object({
   newPassword: yup.string().required('La contraseña es obligatoria')
@@ -62,13 +72,17 @@ const emptyFormValues = {
   role: 'ROLE_USUARIO', password: '', confirmPassword: '',
 };
 
-function isAdminRow(row) {
-  return row.roles?.includes('ROLE_ADMIN');
-}
-
 export default function UsersPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
+
+  const currentUserId = currentUser?.userId;
+  const isSuperAdmin = currentUserId === SUPER_ADMIN_ID;
+  const roleOptions = isSuperAdmin
+    ? ALL_ROLE_OPTIONS
+    : ALL_ROLE_OPTIONS.filter((opt) => opt.value !== 'ROLE_ADMIN');
+  const allowedRoleValues = roleOptions.map((opt) => opt.value);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -80,7 +94,7 @@ export default function UsersPage() {
   });
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
-    resolver: yupResolver(editingUser ? editSchema : createSchema),
+    resolver: yupResolver(editingUser ? buildEditSchema(allowedRoleValues) : buildCreateSchema(allowedRoleValues)),
     defaultValues: emptyFormValues,
   });
 
@@ -157,12 +171,20 @@ export default function UsersPage() {
       email: row.email,
       phone: row.phone || '',
       documentNumber: row.documentNumber || '',
-      role: row.roles?.find((r) => r !== 'ROLE_ADMIN') || 'ROLE_USUARIO',
+      role: row.roles?.[0] || 'ROLE_USUARIO',
       password: '',
       confirmPassword: '',
     });
     setFormOpen(true);
   };
+
+  // Jerarquía de protección: nadie salvo el propio SuperAdmin (ID 1) puede tocar su cuenta,
+  // y ningún usuario puede desactivarse a sí mismo.
+  function getRowRestriction(row) {
+    if (row.id === SUPER_ADMIN_ID && !isSuperAdmin) return 'super-admin';
+    if (row.id === currentUserId) return 'self';
+    return null;
+  }
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 60 },
@@ -190,27 +212,46 @@ export default function UsersPage() {
     {
       field: 'actions', headerName: 'Acciones', width: 150, sortable: false,
       renderCell: ({ row }) => {
-        const disabled = isAdminRow(row);
+        const restriction = getRowRestriction(row);
+        const editToggleDisabled = restriction !== null;
+        const resetDisabled = restriction === 'super-admin';
+
+        const editTooltip = restriction === 'super-admin'
+          ? 'No se puede editar al Administrador Original del sistema'
+          : restriction === 'self'
+            ? 'No puedes editar tu propio usuario desde aquí'
+            : 'Editar';
+        const resetTooltip = restriction === 'super-admin'
+          ? 'No se puede restablecer la contraseña del Administrador Original'
+          : 'Restablecer Contraseña';
+        const toggleTooltip = restriction === 'super-admin'
+          ? 'No se puede cambiar el estado del Administrador Original'
+          : restriction === 'self'
+            ? 'No puedes desactivar tu propia cuenta'
+            : (row.isActive ? 'Desactivar' : 'Activar');
+
         return (
           <Box display="flex" gap={0.5}>
-            <Tooltip title={disabled ? 'No se puede editar un administrador' : 'Editar'}>
+            <Tooltip title={editTooltip}>
               <span>
-                <IconButton size="small" disabled={disabled} onClick={() => handleEdit(row)}>
+                <IconButton size="small" disabled={editToggleDisabled} onClick={() => handleEdit(row)}>
                   <EditIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={disabled ? 'No se puede restablecer la contraseña de un administrador' : 'Restablecer Contraseña'}>
+            <Tooltip title={resetTooltip}>
               <span>
-                <IconButton size="small" disabled={disabled} onClick={() => setResetTarget(row)}>
+                <IconButton size="small" disabled={resetDisabled} onClick={() => setResetTarget(row)}>
                   <LockResetIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title={row.isActive ? 'Desactivar' : 'Activar'}>
-              <IconButton size="small" onClick={() => toggleMutation.mutate(row.id)}>
-                {row.isActive ? <BlockIcon fontSize="small" color="error" /> : <CheckCircleIcon fontSize="small" color="success" />}
-              </IconButton>
+            <Tooltip title={toggleTooltip}>
+              <span>
+                <IconButton size="small" disabled={editToggleDisabled} onClick={() => toggleMutation.mutate(row.id)}>
+                  {row.isActive ? <BlockIcon fontSize="small" color="error" /> : <CheckCircleIcon fontSize="small" color="success" />}
+                </IconButton>
+              </span>
             </Tooltip>
           </Box>
         );
@@ -272,7 +313,7 @@ export default function UsersPage() {
                   <FormControl fullWidth error={!!errors.role}>
                     <InputLabel>Rol *</InputLabel>
                     <Select {...field} label="Rol *">
-                      {ROLE_OPTIONS.map((opt) => (
+                      {roleOptions.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                       ))}
                     </Select>
