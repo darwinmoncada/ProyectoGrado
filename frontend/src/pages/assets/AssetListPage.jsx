@@ -18,13 +18,8 @@ import dayjs from 'dayjs';
 import { assetService } from '../../services/assetService';
 import { inventoryService } from '../../services/inventoryService';
 import { useAuth } from '../../context/AuthContext';
-
-const STATUS_COLORS = {
-  ACTIVE: 'success', LOST: 'warning'
-};
-const STATUS_LABELS = {
-  ACTIVE: 'Activo', LOST: 'Pendiente de baja'
-};
+import { ASSET_STATUS_LABELS, ASSET_STATUS_COLORS, MOVEMENT_TYPE_LABELS } from '../../constants/labels';
+import EmptyValue from '../../components/common/EmptyValue';
 
 export default function AssetListPage() {
   const navigate = useNavigate();
@@ -81,13 +76,13 @@ export default function AssetListPage() {
       startY: 32,
       head: [['Código', 'Nombre', 'Marca', 'Modelo', 'Tipo', 'Área', 'Estado']],
       body: selectedAssets.map((asset) => [
-        asset.codigo || '-',
-        asset.name || '-',
-        asset.brand || '-',
-        asset.model || '-',
-        asset.assetTypeName || '-',
-        asset.areaName || '-',
-        STATUS_LABELS[asset.status] || asset.status || '-',
+        asset.codigo || 'N/A',
+        asset.name || 'N/A',
+        asset.brand || 'N/A',
+        asset.model || 'N/A',
+        asset.assetTypeName || 'N/A',
+        asset.areaName || 'N/A',
+        ASSET_STATUS_LABELS[asset.status] || asset.status || 'N/A',
       ]),
       styles: { fontSize: 8 },
       headStyles: { fillColor: [25, 118, 210] },
@@ -104,14 +99,14 @@ export default function AssetListPage() {
 
     const movementRows = allMovements.flatMap(({ asset, movements }) =>
       movements.map((m) => [
-        asset.name || '-',
-        dayjs(m.movementDate).format('DD/MM/YYYY HH:mm') || '-',
-        MOVEMENT_LABELS[m.movementType] || m.movementType || '-',
-        m.fromArea?.name || '-',
-        m.toArea?.name || '-',
-        m.toUser?.fullName || m.fromUser?.fullName || '-',
-        m.reason || '-',
-        m.notes || '-',
+        asset.name || 'N/A',
+        dayjs(m.movementDate).format('DD/MM/YYYY HH:mm') || 'N/A',
+        MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType || 'N/A',
+        m.fromArea?.name || 'N/A',
+        m.toArea?.name || 'N/A',
+        m.toUser?.fullName || m.fromUser?.fullName || 'N/A',
+        m.reason || 'N/A',
+        m.notes || 'N/A',
       ])
     );
 
@@ -151,9 +146,9 @@ export default function AssetListPage() {
     {
       field: 'status',
       headerName: 'Estado',
-      width: 130,
+      width: 150,
       renderCell: ({ value }) => (
-        <Chip label={STATUS_LABELS[value] || value} color={STATUS_COLORS[value]} size="small" />
+        <Chip label={ASSET_STATUS_LABELS[value] || value} color={ASSET_STATUS_COLORS[value]} size="small" />
       ),
     },
     {
@@ -162,7 +157,7 @@ export default function AssetListPage() {
       width: 130,
       renderCell: ({ row }) => row.hasNetworkDevice ? (
         <Chip label={row.ipAddress || 'Configurado'} size="small" color="info" />
-      ) : '—',
+      ) : <EmptyValue />,
     },
     {
       field: 'actions',
@@ -241,9 +236,9 @@ export default function AssetListPage() {
               onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 0 })}
             >
               <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="ACTIVE">Activo</MenuItem>
-              <MenuItem value="RETIRED">Baja</MenuItem>
-              <MenuItem value="LOST">Pendiente de baja</MenuItem>
+              {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>

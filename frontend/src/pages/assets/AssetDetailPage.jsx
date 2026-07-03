@@ -16,35 +16,13 @@ import { assetService } from '../../services/assetService';
 import { inventoryService } from '../../services/inventoryService';
 import { networkService } from '../../services/networkService';
 import { useAuth } from '../../context/AuthContext';
+import {
+  ASSET_STATUS_LABELS, ASSET_STATUS_COLORS,
+  MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS,
+  NETWORK_STATUS_LABELS, NETWORK_STATUS_COLORS,
+} from '../../constants/labels';
+import EmptyValue from '../../components/common/EmptyValue';
 import dayjs from 'dayjs';
-
-const STATUS_COLORS = {
-  ACTIVE: 'success', MAINTENANCE: 'warning', RETIRED: 'error', LOST: 'default'
-};
-
-const STATUS_LABELS = {
-  ACTIVE: 'Activo', MAINTENANCE: 'En Mantenimiento',
-  RETIRED: 'Dado de Baja', LOST: 'Pendiente de baja',
-};
-
-const MOVEMENT_LABELS = {
-  ENTRY:           'Entrada',
-  EXIT:            'Salida',
-  TRANSFER:        'Traslado',
-  LOAN:            'Préstamo',
-  RETURN:          'Devolución',
-  MAINTENANCE_IN:  'Entrada a Mantenimiento',
-  MAINTENANCE_OUT: 'Salida de Mantenimiento',
-};
-
-const MOVEMENT_COLORS = {
-  ENTRY: 'success', EXIT: 'error', TRANSFER: 'info',
-  LOAN: 'warning', RETURN: 'default',
-  MAINTENANCE_IN: 'warning', MAINTENANCE_OUT: 'success',
-};
-
-const NETWORK_STATUS_COLORS = { ONLINE: 'success', OFFLINE: 'error', UNKNOWN: 'default' };
-const NETWORK_STATUS_LABELS = { ONLINE: 'En línea', OFFLINE: 'Desconectado', UNKNOWN: 'Desconocido' };
 
 const NET_DEFAULTS = {
   ipAddress: '', macAddress: '', hostname: '', subnetMask: '',
@@ -57,7 +35,7 @@ function InfoRow({ label, value }) {
   return (
     <Box mb={1.5}>
       <Typography variant="caption" color="text.secondary">{label}</Typography>
-      <Typography variant="body2" fontWeight={500}>{value || '—'}</Typography>
+      <Typography variant="body2" fontWeight={500}>{value || <EmptyValue />}</Typography>
     </Box>
   );
 }
@@ -282,7 +260,7 @@ function NetworkForm({ assetId, canEdit }) {
                     inputProps={{ readOnly: !canEdit }}
                     sx={{ bgcolor: canEdit ? 'transparent' : 'action.hover' }}>
                     <MenuItem value="ONLINE">En línea</MenuItem>
-                    <MenuItem value="OFFLINE">Desconectado</MenuItem>
+                    <MenuItem value="OFFLINE">Fuera de línea</MenuItem>
                     <MenuItem value="UNKNOWN">Desconocido</MenuItem>
                   </Select>
                 </FormControl>
@@ -353,7 +331,7 @@ export default function AssetDetailPage() {
             Volver
           </Button>
           <Typography variant="h5" fontWeight={700}>{asset?.name}</Typography>
-          <Chip label={STATUS_LABELS[asset?.status] || asset?.statusLabel || asset?.status} color={STATUS_COLORS[asset?.status]} />
+          <Chip label={ASSET_STATUS_LABELS[asset?.status] || asset?.statusLabel || asset?.status} color={ASSET_STATUS_COLORS[asset?.status]} />
         </Box>
         {canEdit && (
           <Button variant="contained" startIcon={<EditIcon />}
@@ -418,8 +396,8 @@ export default function AssetDetailPage() {
               <Paper key={m.id} sx={{ p: 3, mb: 2 }}>
                 <Box display="flex" alignItems="center" gap={1.5} mb={2}>
                   <Chip
-                    label={MOVEMENT_LABELS[m.movementType] ?? m.movementType}
-                    color={MOVEMENT_COLORS[m.movementType] ?? 'default'}
+                    label={MOVEMENT_TYPE_LABELS[m.movementType] ?? m.movementType}
+                    color={MOVEMENT_TYPE_COLORS[m.movementType] ?? 'default'}
                     size="small"
                   />
                   <Typography variant="body2" color="text.secondary">
@@ -436,22 +414,22 @@ export default function AssetDetailPage() {
 
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={3}>
-                    <TextField label="Área origen" value={m.fromArea?.name ?? '—'}
+                    <TextField label="Área origen" value={m.fromArea?.name ?? 'Sin asignar'}
                       size="small" fullWidth variant="filled"
                       InputProps={{ readOnly: true, disableUnderline: true }} />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <TextField label="Área destino" value={m.toArea?.name ?? '—'}
+                    <TextField label="Área destino" value={m.toArea?.name ?? 'Sin asignar'}
                       size="small" fullWidth variant="filled"
                       InputProps={{ readOnly: true, disableUnderline: true }} />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <TextField label="Usuario origen" value={m.fromUser?.fullName ?? '—'}
+                    <TextField label="Usuario origen" value={m.fromUser?.fullName ?? 'Sin asignar'}
                       size="small" fullWidth variant="filled"
                       InputProps={{ readOnly: true, disableUnderline: true }} />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <TextField label="Usuario destino" value={m.toUser?.fullName ?? '—'}
+                    <TextField label="Usuario destino" value={m.toUser?.fullName ?? 'Sin asignar'}
                       size="small" fullWidth variant="filled"
                       InputProps={{ readOnly: true, disableUnderline: true }} />
                   </Grid>

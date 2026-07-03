@@ -1,13 +1,9 @@
 import { useState } from 'react';
-import { Box, Typography, Paper, TextField, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
+import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
-
-const ACTION_COLORS = {
-  CREATE: 'success', UPDATE: 'warning', DELETE: 'error',
-  LOGIN: 'info', LOGOUT: 'default', VIEW: 'default', EXPORT: 'info'
-};
+import { AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, ENTITY_TYPE_LABELS } from '../../constants/labels';
 
 export default function AuditPage() {
   const [filters, setFilters] = useState({ action: '', entityType: '', page: 0 });
@@ -28,10 +24,13 @@ export default function AuditPage() {
     { field: 'id', headerName: '#', width: 60 },
     { field: 'username', headerName: 'Usuario', width: 130 },
     {
-      field: 'action', headerName: 'Acción', width: 110,
-      renderCell: ({ value }) => <Chip label={value} color={ACTION_COLORS[value] || 'default'} size="small" />
+      field: 'action', headerName: 'Acción', width: 140,
+      renderCell: ({ value }) => <Chip label={AUDIT_ACTION_LABELS[value] || value} color={AUDIT_ACTION_COLORS[value] || 'default'} size="small" />
     },
-    { field: 'entityType', headerName: 'Entidad', width: 130 },
+    {
+      field: 'entityType', headerName: 'Entidad', width: 160,
+      renderCell: ({ value }) => ENTITY_TYPE_LABELS[value] || value,
+    },
     { field: 'entityDescription', headerName: 'Descripción', flex: 1 },
     { field: 'ipAddress', headerName: 'IP', width: 130 },
     {
@@ -40,7 +39,7 @@ export default function AuditPage() {
     },
     {
       field: 'timestamp', headerName: 'Fecha/Hora', width: 170,
-      valueFormatter: ({ value }) => value ? new Date(value).toLocaleString('es-CO') : '—'
+      valueFormatter: ({ value }) => value ? new Date(value).toLocaleString('es-CO') : 'N/A'
     },
   ];
 
@@ -54,17 +53,21 @@ export default function AuditPage() {
             <Select value={filters.action} label="Acción"
               onChange={(e) => setFilters({ ...filters, action: e.target.value, page: 0 })}>
               <MenuItem value="">Todas</MenuItem>
-              {['CREATE','UPDATE','DELETE','LOGIN','LOGOUT','VIEW','EXPORT'].map((a) => (
-                <MenuItem key={a} value={a}>{a}</MenuItem>
+              {Object.entries(AUDIT_ACTION_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <TextField
-            label="Tipo de Entidad" size="small"
-            value={filters.entityType}
-            onChange={(e) => setFilters({ ...filters, entityType: e.target.value, page: 0 })}
-            placeholder="Asset, User, ..."
-          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Tipo de Entidad</InputLabel>
+            <Select value={filters.entityType} label="Tipo de Entidad"
+              onChange={(e) => setFilters({ ...filters, entityType: e.target.value, page: 0 })}>
+              <MenuItem value="">Todas</MenuItem>
+              {Object.entries(ENTITY_TYPE_LABELS).map(([value, label]) => (
+                <MenuItem key={value} value={value}>{label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
       </Paper>
       <Paper>

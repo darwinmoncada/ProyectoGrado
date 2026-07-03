@@ -10,6 +10,7 @@ import * as yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { assetService } from '../../services/assetService';
+import { ASSET_STATUS_LABELS } from '../../constants/labels';
 import { DatePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 
@@ -129,9 +130,9 @@ export default function AssetFormPage() {
                   <FormControl fullWidth>
                     <InputLabel>Estado *</InputLabel>
                     <Select {...field} label="Estado *">
-                      <MenuItem value="ACTIVE">Activo</MenuItem>
-                      <MenuItem value="RETIRED">Baja</MenuItem>
-                      <MenuItem value="LOST">Pendiente de baja</MenuItem>
+                      {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
+                        <MenuItem key={value} value={value}>{label}</MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 )} />

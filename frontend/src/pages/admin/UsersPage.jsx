@@ -19,13 +19,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
+import { ROLE_LABELS } from '../../constants/labels';
 
-const ALL_ROLE_OPTIONS = [
-  { value: 'ROLE_SUPERADMIN', label: 'SuperAdministrador' },
-  { value: 'ROLE_ADMIN', label: 'Administrador' },
-  { value: 'ROLE_TECNICO', label: 'Técnico' },
-  { value: 'ROLE_USUARIO', label: 'Usuario Estándar' },
-];
+const ALL_ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
 
 // Rango de jerarquía: menor número = mayor privilegio (usado para ordenar la tabla).
 const ROLE_RANK = {
@@ -229,11 +225,11 @@ export default function UsersPage() {
     { field: 'email', headerName: 'Correo', flex: 1 },
     { field: 'phone', headerName: 'Teléfono', width: 130 },
     {
-      field: 'roles', headerName: 'Rol', width: 160,
+      field: 'roles', headerName: 'Rol', width: 190,
       renderCell: ({ row }) => (
         <Box display="flex" gap={0.5} flexWrap="wrap">
           {row.roles?.map((r) => (
-            <Chip key={r} label={r?.replace('ROLE_', '')} size="small"
+            <Chip key={r} label={ROLE_LABELS[r] || r} size="small"
               sx={ROLE_CHIP_STYLE[r] || ROLE_CHIP_STYLE.ROLE_USUARIO} />
           ))}
         </Box>

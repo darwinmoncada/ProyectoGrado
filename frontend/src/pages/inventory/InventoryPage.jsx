@@ -15,28 +15,10 @@ import { useForm, Controller } from 'react-hook-form';
 import { inventoryService } from '../../services/inventoryService';
 import { assetService } from '../../services/assetService';
 import { useAuth } from '../../context/AuthContext';
+import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS, ASSET_STATUS_LABELS } from '../../constants/labels';
 import dayjs from 'dayjs';
 
-const MOVEMENT_TYPES = [
-  { value: 'ENTRY',           label: 'Entrada' },
-  { value: 'EXIT',            label: 'Salida' },
-  { value: 'TRANSFER',        label: 'Traslado' },
-  { value: 'LOAN',            label: 'Préstamo' },
-  { value: 'RETURN',          label: 'Devolución' },
-  { value: 'MAINTENANCE_IN',  label: 'Entrada a Mantenimiento' },
-  { value: 'MAINTENANCE_OUT', label: 'Salida de Mantenimiento' },
-];
-
-const TYPE_COLORS = {
-  ENTRY: 'success', EXIT: 'error', TRANSFER: 'info',
-  LOAN: 'warning', RETURN: 'default',
-  MAINTENANCE_IN: 'warning', MAINTENANCE_OUT: 'success',
-};
-
-const STATUS_LABELS = {
-  ACTIVE: 'Activo', MAINTENANCE: 'En Mantenimiento',
-  RETIRED: 'Dado de Baja', LOST: 'Pendiente de baja',
-};
+const MOVEMENT_TYPES = Object.entries(MOVEMENT_TYPE_LABELS).map(([value, label]) => ({ value, label }));
 
 export default function InventoryPage() {
   const [open, setOpen]       = useState(false);
@@ -137,31 +119,30 @@ export default function InventoryPage() {
     { field: 'id', headerName: '#', width: 60 },
     {
       field: 'asset', headerName: 'Activo', flex: 1,
-      valueGetter: ({ row }) => row.asset?.name || '—',
+      valueGetter: ({ row }) => row.asset?.name || 'Sin asignar',
     },
     {
       field: 'codigo', headerName: 'Código', width: 120,
-      valueGetter: ({ row }) => row.asset?.codigo || '—',
+      valueGetter: ({ row }) => row.asset?.codigo || 'Sin asignar',
     },
     {
       field: 'movementType', headerName: 'Tipo de Movimiento', width: 200,
-      renderCell: ({ value }) => {
-        const label = MOVEMENT_TYPES.find((t) => t.value === value)?.label || value;
-        return <Chip label={label} color={TYPE_COLORS[value]} size="small" />;
-      },
+      renderCell: ({ value }) => (
+        <Chip label={MOVEMENT_TYPE_LABELS[value] || value} color={MOVEMENT_TYPE_COLORS[value]} size="small" />
+      ),
     },
     {
       field: 'movementDate', headerName: 'Fecha', width: 170,
       valueFormatter: ({ value }) =>
-        value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '—',
+        value ? dayjs(value).format('DD/MM/YYYY HH:mm') : 'N/A',
     },
     {
       field: 'notes', headerName: 'Observación', flex: 1,
-      valueGetter: ({ row }) => row.notes || '—',
+      valueGetter: ({ row }) => row.notes || 'Sin observaciones',
     },
     {
       field: 'createdBy', headerName: 'Registrado por', width: 160,
-      valueGetter: ({ row }) => row.createdBy?.fullName || '—',
+      valueGetter: ({ row }) => row.createdBy?.fullName || 'Sin asignar',
     },
   ];
 
@@ -268,7 +249,7 @@ export default function InventoryPage() {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         label="Estado actual"
-                        value={STATUS_LABELS[assetFound.status] || assetFound.status}
+                        value={ASSET_STATUS_LABELS[assetFound.status] || assetFound.status}
                         fullWidth
                         InputProps={{ readOnly: true }}
                         variant="filled"

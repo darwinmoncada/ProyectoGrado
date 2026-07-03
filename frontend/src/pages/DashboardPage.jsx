@@ -11,6 +11,8 @@ import {
 import { assetService } from '../services/assetService';
 import { networkService } from '../services/networkService';
 import { inventoryService } from '../services/inventoryService';
+import { MOVEMENT_TYPE_LABELS } from '../constants/labels';
+import EmptyValue from '../components/common/EmptyValue';
 
 const COLORS = ['#1565C0', '#F57F17'];
 
@@ -73,7 +75,7 @@ export default function DashboardPage() {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Dispositivos Online"
+            title="Dispositivos En Línea"
             value={networkStats?.online ?? '—'}
             icon={<WifiIcon sx={{ color: '#2E7D32', fontSize: 32 }} />}
             color="#2E7D32"
@@ -82,7 +84,7 @@ export default function DashboardPage() {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
-            title="Dispositivos Offline"
+            title="Dispositivos Fuera de Línea"
             value={networkStats?.offline ?? '—'}
             icon={<WifiOffIcon sx={{ color: '#C62828', fontSize: 32 }} />}
             color="#C62828"
@@ -96,9 +98,18 @@ export default function DashboardPage() {
             <CardContent>
               <Typography variant="h6" mb={2}>Activos por Tipo</Typography>
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={byTypeData} margin={{ top: 5, right: 20, bottom: 60, left: 0 }}>
+                <BarChart data={byTypeData} margin={{ top: 5, right: 20, bottom: 70, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-35} textAnchor="end" interval={0} tick={{ fontSize: 11 }} />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    interval={0}
+                    dx={-10}
+                    dy={10}
+                    height={70}
+                    tick={{ fontSize: 11 }}
+                  />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
                   <Bar dataKey="value" name="Cantidad" fill="#1565C0" radius={[4, 4, 0, 0]} />
@@ -160,12 +171,14 @@ export default function DashboardPage() {
                     {recentMovements?.map((m) => (
                       <Box key={m.id} component="tr" sx={{ borderBottom: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}>
                         <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.asset?.name}</Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.movementType}</Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.toArea?.name || '—'}</Box>
+                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>
+                          {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
+                        </Box>
+                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.toArea?.name || <EmptyValue />}</Box>
                         <Box component="td" sx={{ p: 1, fontSize: 13 }}>
                           {new Date(m.movementDate).toLocaleDateString('es-CO')}
                         </Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.reason || '—'}</Box>
+                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.reason || <EmptyValue>Sin especificar</EmptyValue>}</Box>
                       </Box>
                     ))}
                   </Box>

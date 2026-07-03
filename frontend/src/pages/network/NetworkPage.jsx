@@ -9,8 +9,8 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useQuery } from '@tanstack/react-query';
 import { networkService } from '../../services/networkService';
+import { NETWORK_STATUS_LABELS, NETWORK_STATUS_COLORS, CONNECTION_TYPE_LABELS } from '../../constants/labels';
 
-const STATUS_COLORS = { ONLINE: 'success', OFFLINE: 'error', UNKNOWN: 'default' };
 const STATUS_ICONS = {
   ONLINE: <WifiIcon fontSize="small" />,
   OFFLINE: <WifiOffIcon fontSize="small" />,
@@ -49,8 +49,8 @@ export default function NetworkPage() {
       renderCell: ({ value }) => (
         <Chip
           icon={STATUS_ICONS[value]}
-          label={value}
-          color={STATUS_COLORS[value]}
+          label={NETWORK_STATUS_LABELS[value] || value}
+          color={NETWORK_STATUS_COLORS[value]}
           size="small"
         />
       ),
@@ -59,7 +59,7 @@ export default function NetworkPage() {
       field: 'asset',
       headerName: 'Activo',
       width: 200,
-      valueGetter: ({ row }) => row.asset?.name || '—',
+      valueGetter: ({ row }) => row.asset?.name || 'Sin asignar',
     },
     { field: 'vlanId', headerName: 'VLAN', width: 80 },
     { field: 'firmwareVersion', headerName: 'Firmware', width: 120 },
@@ -68,7 +68,7 @@ export default function NetworkPage() {
       headerName: 'Último Contacto',
       width: 160,
       valueFormatter: ({ value }) =>
-        value ? new Date(value).toLocaleString('es-CO') : '—',
+        value ? new Date(value).toLocaleString('es-CO') : 'N/A',
     },
   ];
 
@@ -82,11 +82,11 @@ export default function NetworkPage() {
       <Box display="flex" gap={2} mb={3} flexWrap="wrap">
         {[
           { label: 'Total', value: stats?.total, color: 'primary.main' },
-          { label: 'Online', value: stats?.online, color: 'success.main' },
-          { label: 'Offline', value: stats?.offline, color: 'error.main' },
-          { label: 'Desconocido', value: stats?.unknown, color: 'text.secondary' },
+          { label: NETWORK_STATUS_LABELS.ONLINE, value: stats?.online, color: 'success.main' },
+          { label: NETWORK_STATUS_LABELS.OFFLINE, value: stats?.offline, color: 'error.main' },
+          { label: NETWORK_STATUS_LABELS.UNKNOWN, value: stats?.unknown, color: 'text.secondary' },
         ].map(({ label, value, color }) => (
-          <Paper key={label} sx={{ p: 2, minWidth: 120, textAlign: 'center' }}>
+          <Paper key={label} sx={{ p: 2, minWidth: 120, textAlign: 'center', borderRadius: 2, boxShadow: 1 }}>
             <Typography variant="h5" fontWeight={700} color={color}>{value ?? '—'}</Typography>
             <Typography variant="caption" color="text.secondary">{label}</Typography>
           </Paper>
@@ -140,7 +140,7 @@ export default function NetworkPage() {
                   {' ↔ '}
                   <strong>{link.targetDevice?.hostname || link.targetDevice?.ipAddress}</strong>
                   {' — '}
-                  <Chip label={link.connectionType} size="small" />
+                  <Chip label={CONNECTION_TYPE_LABELS[link.connectionType] || link.connectionType} size="small" />
                   {link.bandwidth && ` | ${link.bandwidth}`}
                 </Typography>
               </Box>
