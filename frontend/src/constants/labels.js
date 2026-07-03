@@ -91,3 +91,10 @@ export const ROLE_LABELS = {
   ROLE_TECNICO: 'Técnico',
   ROLE_USUARIO: 'Usuario Estándar',
 };
+
+export const ROLE_CHIP_STYLE = {
+  ROLE_SUPERADMIN: { bgcolor: '#EEF2F6', color: '#4F46E5', fontWeight: 700 },
+  ROLE_ADMIN: { bgcolor: '#E6F4EA', color: '#0D9488', fontWeight: 600 },
+  ROLE_TECNICO: { bgcolor: '#E8F0FE', color: '#1A73E8', fontWeight: 600 },
+  ROLE_USUARIO: { bgcolor: '#F3F4F6', color: '#6B7280', fontWeight: 600 },
+};

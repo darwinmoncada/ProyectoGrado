@@ -139,8 +139,14 @@ export default function AssetListPage() {
   const columns = [
     { field: 'codigo', headerName: 'Código', width: 110 },
     { field: 'name', headerName: 'Nombre', flex: 1, minWidth: 150 },
-    { field: 'brand', headerName: 'Marca', width: 100 },
-    { field: 'model', headerName: 'Modelo', width: 120 },
+    {
+      field: 'brand', headerName: 'Marca', width: 100,
+      renderCell: ({ value }) => value || <EmptyValue />,
+    },
+    {
+      field: 'model', headerName: 'Modelo', width: 120,
+      renderCell: ({ value }) => value || <EmptyValue />,
+    },
     { field: 'assetTypeName', headerName: 'Tipo', width: 150 },
     { field: 'areaName', headerName: 'Área', width: 150 },
     {

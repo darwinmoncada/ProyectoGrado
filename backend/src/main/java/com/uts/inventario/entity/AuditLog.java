@@ -1,5 +1,6 @@
 package com.uts.inventario.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.uts.inventario.enums.AuditAction;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,12 +20,21 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Solo para uso interno (filtros JPQL/Criteria); la API expone username/fullName/roleName
+    // ya desnormalizados, así que no se serializa (evita filtrar el User completo, con password).
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @Column(length = 50)
     private String username;
+
+    @Column(name = "full_name", length = 100)
+    private String fullName;
+
+    @Column(name = "role_name", length = 50)
+    private String roleName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)

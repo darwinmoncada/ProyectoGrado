@@ -1,16 +1,14 @@
 package com.uts.inventario.controller;
 
 import com.uts.inventario.dto.response.ApiResponse;
+import com.uts.inventario.dto.response.AuditLogResponse;
 import com.uts.inventario.dto.response.PageResponse;
-import com.uts.inventario.entity.AuditLog;
 import com.uts.inventario.enums.AuditAction;
-import com.uts.inventario.repository.AuditLogRepository;
-import com.uts.inventario.repository.spec.AuditLogSpecification;
+import com.uts.inventario.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,11 +27,11 @@ import java.time.LocalDateTime;
 @SecurityRequirement(name = "bearerAuth")
 public class AuditController {
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditService auditService;
 
     @GetMapping("/logs")
     @Operation(summary = "Buscar logs de auditoría")
-    public ResponseEntity<ApiResponse<PageResponse<AuditLog>>> getLogs(
+    public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getLogs(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) String entityType,
@@ -43,7 +41,7 @@ public class AuditController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
-        Page<AuditLog> result = auditLogRepository.findAll(AuditLogSpecification.searchLogs(userId, action, entityType, from, to), pageable);
-        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(result)));
+        return ResponseEntity.ok(ApiResponse.success(
+                auditService.searchLogs(userId, action, entityType, from, to, pageable)));
     }
 }

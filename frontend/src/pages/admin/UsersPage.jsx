@@ -19,7 +19,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
-import { ROLE_LABELS } from '../../constants/labels';
+import { ROLE_LABELS, ROLE_CHIP_STYLE } from '../../constants/labels';
 
 const ALL_ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));
 
@@ -29,13 +29,6 @@ const ROLE_RANK = {
   ROLE_ADMIN: 2,
   ROLE_TECNICO: 3,
   ROLE_USUARIO: 4,
-};
-
-const ROLE_CHIP_STYLE = {
-  ROLE_SUPERADMIN: { bgcolor: '#EEF2F6', color: '#4F46E5', fontWeight: 700 },
-  ROLE_ADMIN: { bgcolor: '#E6F4EA', color: '#0D9488', fontWeight: 600 },
-  ROLE_TECNICO: { bgcolor: '#E8F0FE', color: '#1A73E8', fontWeight: 600 },
-  ROLE_USUARIO: { bgcolor: '#F3F4F6', color: '#6B7280', fontWeight: 600 },
 };
 
 function getUserRank(user) {

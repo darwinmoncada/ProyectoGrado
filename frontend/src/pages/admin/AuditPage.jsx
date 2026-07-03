@@ -3,7 +3,42 @@ import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem, Chip
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
-import { AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, ENTITY_TYPE_LABELS } from '../../constants/labels';
+import {
+  AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, ENTITY_TYPE_LABELS,
+  ROLE_LABELS, ROLE_CHIP_STYLE,
+} from '../../constants/labels';
+import EmptyValue from '../../components/common/EmptyValue';
+
+// Genera una frase legible combinando acción, usuario, entidad y descripción del registro,
+// en vez de repetir el username crudo en la columna "Descripción".
+function buildAuditDescription(row) {
+  const who = `El usuario ${row.username}`;
+  const entityLabel = ENTITY_TYPE_LABELS[row.entityType] || row.entityType;
+  const target = row.entityDescription ? ` "${row.entityDescription}"` : '';
+
+  switch (row.action) {
+    case 'LOGIN':
+      return row.success
+        ? `${who} inició sesión con éxito en el sistema.`
+        : `${who} intentó iniciar sesión sin éxito.`;
+    case 'LOGOUT':
+      return `${who} cerró sesión en el sistema.`;
+    case 'CREATE':
+      return `${who} creó un nuevo registro de ${entityLabel}${target}.`;
+    case 'UPDATE':
+      return `${who} modificó el registro de ${entityLabel}${target}.`;
+    case 'DELETE':
+      return `${who} eliminó el registro de ${entityLabel}${target}.`;
+    case 'VIEW':
+      return `${who} consultó el registro de ${entityLabel}${target}.`;
+    case 'EXPORT':
+      return `${who} exportó datos de ${entityLabel}${target}.`;
+    case 'IMPORT':
+      return `${who} importó datos de ${entityLabel}${target}.`;
+    default:
+      return row.entityDescription || `${who} realizó una acción sobre ${entityLabel}.`;
+  }
+}
 
 export default function AuditPage() {
   const [filters, setFilters] = useState({ action: '', entityType: '', page: 0 });
@@ -22,7 +57,18 @@ export default function AuditPage() {
 
   const columns = [
     { field: 'id', headerName: '#', width: 60 },
-    { field: 'username', headerName: 'Usuario', width: 130 },
+    { field: 'username', headerName: 'Usuario', width: 120 },
+    {
+      field: 'fullName', headerName: 'Nombre Completo', width: 180,
+      renderCell: ({ value }) => value || <EmptyValue />,
+    },
+    {
+      field: 'roleName', headerName: 'Rol', width: 160,
+      renderCell: ({ value }) => (
+        <Chip label={ROLE_LABELS[value] || 'Sistema'} size="small"
+          sx={ROLE_CHIP_STYLE[value] || ROLE_CHIP_STYLE.ROLE_USUARIO} />
+      ),
+    },
     {
       field: 'action', headerName: 'Acción', width: 140,
       renderCell: ({ value }) => <Chip label={AUDIT_ACTION_LABELS[value] || value} color={AUDIT_ACTION_COLORS[value] || 'default'} size="small" />
@@ -31,7 +77,10 @@ export default function AuditPage() {
       field: 'entityType', headerName: 'Entidad', width: 160,
       renderCell: ({ value }) => ENTITY_TYPE_LABELS[value] || value,
     },
-    { field: 'entityDescription', headerName: 'Descripción', flex: 1 },
+    {
+      field: 'entityDescription', headerName: 'Descripción', flex: 1, minWidth: 320,
+      renderCell: ({ row }) => buildAuditDescription(row),
+    },
     { field: 'ipAddress', headerName: 'IP', width: 130 },
     {
       field: 'success', headerName: 'Éxito', width: 80,
