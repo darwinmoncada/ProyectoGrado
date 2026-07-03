@@ -1,16 +1,19 @@
 package com.uts.inventario.controller;
 
+import com.uts.inventario.dto.request.ResetPasswordRequest;
+import com.uts.inventario.dto.request.UpdateUserRequest;
 import com.uts.inventario.dto.response.ApiResponse;
+import com.uts.inventario.dto.response.UserResponse;
 import com.uts.inventario.entity.Area;
 import com.uts.inventario.entity.AssetType;
-import com.uts.inventario.entity.User;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.AreaRepository;
 import com.uts.inventario.repository.AssetTypeRepository;
-import com.uts.inventario.repository.UserRepository;
+import com.uts.inventario.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +28,7 @@ import java.util.List;
 @Tag(name = "Catálogos", description = "Endpoints de catálogos: usuarios, áreas y tipos de activos")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final AreaRepository areaRepository;
     private final AssetTypeRepository assetTypeRepository;
 
@@ -33,30 +36,43 @@ public class UserController {
 
     @GetMapping("/users")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
-    @Operation(summary = "Listar usuarios activos")
-    public ResponseEntity<ApiResponse<List<User>>> getUsers() {
-        return ResponseEntity.ok(ApiResponse.success(userRepository.findAllActive()));
+    @Operation(summary = "Listar usuarios")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers(
+            @RequestParam(defaultValue = "false") boolean includeInactive) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getAllUsers(includeInactive)));
     }
 
     @GetMapping("/users/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
     @Operation(summary = "Obtener usuario por ID")
-    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + id));
-        return ResponseEntity.ok(ApiResponse.success(user));
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getUser(id)));
+    }
+
+    @PutMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Actualizar usuario (solo ADMIN, no aplica a administradores)")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Usuario actualizado", userService.updateUser(id, request)));
+    }
+
+    @PatchMapping("/users/{id}/password")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Restablecer contraseña de un usuario (solo ADMIN, no aplica a administradores)")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @PathVariable Long id, @Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Contraseña restablecida", null));
     }
 
     @PatchMapping("/users/{id}/toggle-active")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Activar/desactivar usuario")
-    public ResponseEntity<ApiResponse<String>> toggleUser(@PathVariable Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado: " + id));
-        user.setIsActive(!user.getIsActive());
-        userRepository.save(user);
-        String state = user.getIsActive() ? "activado" : "desactivado";
-        return ResponseEntity.ok(ApiResponse.success("Usuario " + state, null));
+    public ResponseEntity<ApiResponse<UserResponse>> toggleUser(@PathVariable Long id) {
+        UserResponse response = userService.toggleActive(id);
+        String state = response.getIsActive() ? "activado" : "desactivado";
+        return ResponseEntity.ok(ApiResponse.success("Usuario " + state, response));
     }
 
     // ---- Áreas ----

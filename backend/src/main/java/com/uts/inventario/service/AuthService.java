@@ -88,6 +88,10 @@ public class AuthService {
                     .orElseThrow(() -> new BusinessException("Rol por defecto no encontrado")));
         }
 
+        if (roleNames.contains(RoleName.ROLE_ADMIN)) {
+            throw new BusinessException("No está permitido asignar el rol ROLE_ADMIN al crear usuarios");
+        }
+
         Set<Role> roles = new HashSet<>();
         for (RoleName roleName : roleNames) {
             Role role = roleRepository.findByName(roleName)

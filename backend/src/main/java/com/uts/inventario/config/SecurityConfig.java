@@ -50,7 +50,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 // Permitir preflight CORS OPTIONS antes que otras reglas (crítico para navegadores)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Rutas públicas de autenticación (login, register, etc) - muy prioritario
+                // Registro de usuarios: solo ADMIN puede crear cuentas (refuerza el @PreAuthorize del controller)
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
+                // Rutas públicas de autenticación (login, etc) - muy prioritario
                 .requestMatchers("/api/auth/**").permitAll()
                 // Permitir recursos estáticos en ubicaciones comunes (incluye /assets/**)
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()

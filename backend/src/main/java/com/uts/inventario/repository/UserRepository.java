@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.isActive = true ORDER BY u.fullName")
     java.util.List<User> findAllActive();
+
+    java.util.List<User> findAllByOrderByFullName();
 }
