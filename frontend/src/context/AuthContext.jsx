@@ -44,8 +44,12 @@ export function AuthProvider({ children }) {
     [user]
   );
 
+  // Un ROLE_SUPERADMIN debe conservar todos los accesos de ROLE_ADMIN.
+  const isSuperAdmin = user?.roles?.includes('ROLE_SUPERADMIN') || false;
+  const isAdmin = user?.roles?.includes('ROLE_ADMIN') || isSuperAdmin;
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, isAdmin, isSuperAdmin }}>
       {children}
     </AuthContext.Provider>
   );

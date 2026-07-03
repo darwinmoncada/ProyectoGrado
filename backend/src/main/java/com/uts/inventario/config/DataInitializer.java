@@ -37,6 +37,7 @@ public class DataInitializer {
                 admin -> {
                     admin.setPassword(passwordEncoder.encode("Admin@123"));
                     admin.setIsActive(true);
+                    admin.setFullName("SuperAdministrador del Sistema");
                     admin.setRoles(Set.of(superAdminRole));
                     userRepository.save(admin);
                     log.info("✓ Usuario admin actualizado (rol ROLE_SUPERADMIN, contraseña reestablecida)");
@@ -47,7 +48,7 @@ public class DataInitializer {
                             .username("admin")
                             .email("admin@uts.edu.co")
                             .password(passwordEncoder.encode("Admin@123"))
-                            .fullName("Administrador del Sistema")
+                            .fullName("SuperAdministrador del Sistema")
                             .phone("6076543210")
                             .roles(Set.of(superAdminRole))
                             .isActive(true)

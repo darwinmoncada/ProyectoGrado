@@ -28,7 +28,7 @@ export default function Header({ drawerWidth, onMenuClick }) {
   };
 
   const getRoleLabel = (roles) => {
-    if (roles?.includes('ROLE_SUPERADMIN')) return 'Super Administrador';
+    if (roles?.includes('ROLE_SUPERADMIN')) return 'SuperAdministrador';
     if (roles?.includes('ROLE_ADMIN')) return 'Administrador';
     if (roles?.includes('ROLE_TECNICO')) return 'Técnico';
     return 'Usuario';

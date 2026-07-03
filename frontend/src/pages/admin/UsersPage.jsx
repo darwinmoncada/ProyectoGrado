@@ -19,7 +19,7 @@ import { userService } from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 
 const ALL_ROLE_OPTIONS = [
-  { value: 'ROLE_SUPERADMIN', label: 'Super Administrador' },
+  { value: 'ROLE_SUPERADMIN', label: 'SuperAdministrador' },
   { value: 'ROLE_ADMIN', label: 'Administrador' },
   { value: 'ROLE_TECNICO', label: 'Técnico' },
   { value: 'ROLE_USUARIO', label: 'Usuario Estándar' },
@@ -221,15 +221,15 @@ export default function UsersPage() {
         const resetDisabled = restriction === 'super-admin';
 
         const editTooltip = restriction === 'super-admin'
-          ? 'No se puede editar a un Super Administrador'
+          ? 'No se puede editar a un SuperAdministrador'
           : restriction === 'self'
             ? 'No puedes editar tu propio usuario desde aquí'
             : 'Editar';
         const resetTooltip = restriction === 'super-admin'
-          ? 'No se puede restablecer la contraseña de un Super Administrador'
+          ? 'No se puede restablecer la contraseña de un SuperAdministrador'
           : 'Restablecer Contraseña';
         const toggleTooltip = restriction === 'super-admin'
-          ? 'No se puede cambiar el estado de un Super Administrador'
+          ? 'No se puede cambiar el estado de un SuperAdministrador'
           : restriction === 'self'
             ? 'No puedes desactivar tu propia cuenta'
             : (row.isActive ? 'Desactivar' : 'Activar');
