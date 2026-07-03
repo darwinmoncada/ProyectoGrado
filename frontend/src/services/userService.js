@@ -8,4 +8,5 @@ export const userService = {
   resetPassword: (id, newPassword) =>
     api.patch(`/users/${id}/password`, { newPassword }).then((r) => r.data),
   toggleActive: (id) => api.patch(`/users/${id}/toggle-active`).then((r) => r.data.data),
+  delete: (id) => api.delete(`/users/${id}`).then((r) => r.data),
 };

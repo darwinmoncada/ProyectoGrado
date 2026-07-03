@@ -52,6 +52,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Registro de usuarios: solo ADMIN/SUPERADMIN puede crear cuentas (refuerza el @PreAuthorize del controller)
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").hasAnyRole("ADMIN", "SUPERADMIN")
+                // Nota: eliminar usuario NO se restringe aquí a nivel de filtro; el @PreAuthorize del
+                // controller ya lo protege. Un requestMatcher aquí para DELETE provoca que Spring Security
+                // rechace la petición antes de llegar al DispatcherServlet, lo que en este entorno termina
+                // en un reenvío de error de Tomcat que rompe con métodos no-GET (500 en vez de 403).
                 // Rutas públicas de autenticación (login, etc) - muy prioritario
                 .requestMatchers("/api/auth/**").permitAll()
                 // Permitir recursos estáticos en ubicaciones comunes (incluye /assets/**)
@@ -65,8 +69,8 @@ public class SecurityConfig {
                     "/assets/**",
                     "/static/**"
                 ).permitAll()
-                // Rutas administrativas seguras
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                // "/admin/**" NO se restringe aquí: son rutas del SPA (React Router), no endpoints del
+                // backend; bloquearlas rompía el F5 en /admin/users al no llegar JWT en la navegación.
                 // Todas las demás APIs requieren autenticación
                 .requestMatchers("/api/**").authenticated()
                 // Permite el resto (principio de menor privilegio ya aplicado arriba)

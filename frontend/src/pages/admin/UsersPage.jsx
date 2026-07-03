@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, IconButton, Tooltip, Button,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import LockResetIcon from '@mui/icons-material/LockReset';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useForm, Controller } from 'react-hook-form';
@@ -25,12 +26,25 @@ const ALL_ROLE_OPTIONS = [
   { value: 'ROLE_USUARIO', label: 'Usuario Estándar' },
 ];
 
-const ROLE_CHIP_COLOR = {
-  ROLE_SUPERADMIN: 'secondary',
-  ROLE_ADMIN: 'error',
-  ROLE_TECNICO: 'warning',
-  ROLE_USUARIO: 'default',
+// Rango de jerarquía: menor número = mayor privilegio (usado para ordenar la tabla).
+const ROLE_RANK = {
+  ROLE_SUPERADMIN: 1,
+  ROLE_ADMIN: 2,
+  ROLE_TECNICO: 3,
+  ROLE_USUARIO: 4,
 };
+
+const ROLE_CHIP_STYLE = {
+  ROLE_SUPERADMIN: { bgcolor: '#EEF2F6', color: '#4F46E5', fontWeight: 700 },
+  ROLE_ADMIN: { bgcolor: '#E6F4EA', color: '#0D9488', fontWeight: 600 },
+  ROLE_TECNICO: { bgcolor: '#E8F0FE', color: '#1A73E8', fontWeight: 600 },
+  ROLE_USUARIO: { bgcolor: '#F3F4F6', color: '#6B7280', fontWeight: 600 },
+};
+
+function getUserRank(user) {
+  const ranks = (user.roles || []).map((r) => ROLE_RANK[r] || 99);
+  return ranks.length ? Math.min(...ranks) : 99;
+}
 
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
@@ -97,6 +111,11 @@ export default function UsersPage() {
     queryFn: userService.getAll,
   });
 
+  const sortedUsers = useMemo(
+    () => [...(users || [])].sort((a, b) => getUserRank(a) - getUserRank(b)),
+    [users]
+  );
+
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(editingUser ? buildEditSchema(allowedRoleValues) : buildCreateSchema(allowedRoleValues)),
     defaultValues: emptyFormValues,
@@ -161,6 +180,22 @@ export default function UsersPage() {
       enqueueSnackbar(err?.response?.data?.error || 'Error al actualizar el estado', { variant: 'error' }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => userService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      enqueueSnackbar('Usuario eliminado', { variant: 'success' });
+    },
+    onError: (err) =>
+      enqueueSnackbar(err?.response?.data?.error || 'Error al eliminar el usuario', { variant: 'error' }),
+  });
+
+  const handleDelete = (row) => {
+    if (window.confirm(`¿Eliminar al usuario "${row.username}"? Esta acción no se puede deshacer.`)) {
+      deleteMutation.mutate(row.id);
+    }
+  };
+
   const handleCreate = () => {
     setEditingUser(null);
     reset(emptyFormValues);
@@ -202,7 +237,7 @@ export default function UsersPage() {
         <Box display="flex" gap={0.5} flexWrap="wrap">
           {row.roles?.map((r) => (
             <Chip key={r} label={r?.replace('ROLE_', '')} size="small"
-              color={ROLE_CHIP_COLOR[r] || 'default'} />
+              sx={ROLE_CHIP_STYLE[r] || ROLE_CHIP_STYLE.ROLE_USUARIO} />
           ))}
         </Box>
       )
@@ -214,11 +249,12 @@ export default function UsersPage() {
       )
     },
     {
-      field: 'actions', headerName: 'Acciones', width: 150, sortable: false,
+      field: 'actions', headerName: 'Acciones', width: isSuperAdmin ? 190 : 150, sortable: false,
       renderCell: ({ row }) => {
         const restriction = getRowRestriction(row);
         const editToggleDisabled = restriction !== null;
         const resetDisabled = restriction === 'super-admin';
+        const isSelf = restriction === 'self';
 
         const editTooltip = restriction === 'super-admin'
           ? 'No se puede editar a un SuperAdministrador'
@@ -257,6 +293,15 @@ export default function UsersPage() {
                 </IconButton>
               </span>
             </Tooltip>
+            {isSuperAdmin && (
+              <Tooltip title={isSelf ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}>
+                <span>
+                  <IconButton size="small" disabled={isSelf} onClick={() => handleDelete(row)}>
+                    <DeleteIcon fontSize="small" color={isSelf ? 'disabled' : 'error'} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
           </Box>
         );
       }
@@ -273,7 +318,7 @@ export default function UsersPage() {
       </Box>
       <Paper>
         <DataGrid
-          rows={users || []}
+          rows={sortedUsers}
           columns={columns}
           loading={isLoading}
           disableRowSelectionOnClick

@@ -75,6 +75,14 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Usuario " + state, response));
     }
 
+    @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    @Operation(summary = "Eliminar usuario (solo SUPERADMIN)")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("Usuario eliminado", null));
+    }
+
     // ---- Áreas ----
 
     @GetMapping("/areas")

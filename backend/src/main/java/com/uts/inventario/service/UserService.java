@@ -12,6 +12,7 @@ import com.uts.inventario.repository.RoleRepository;
 import com.uts.inventario.repository.UserRepository;
 import com.uts.inventario.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,6 +99,24 @@ public class UserService {
 
         user.setIsActive(!user.getIsActive());
         return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public void deleteUser(Long id) {
+        User user = findUserOrThrow(id);
+
+        if (id.equals(SecurityUtils.getCurrentUserId())) {
+            throw new BusinessException("No puedes eliminar tu propia cuenta");
+        }
+
+        try {
+            userRepository.delete(user);
+            userRepository.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessException(
+                    "No se puede eliminar: el usuario tiene registros asociados en el sistema " +
+                    "(activos, movimientos o auditoría). Desactívalo en su lugar.");
+        }
     }
 
     private Set<Role> resolveRoles(Set<RoleName> roleNames, boolean allowElevatedRoles) {
