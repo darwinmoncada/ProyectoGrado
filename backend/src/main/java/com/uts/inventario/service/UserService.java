@@ -8,6 +8,10 @@ import com.uts.inventario.entity.User;
 import com.uts.inventario.enums.RoleName;
 import com.uts.inventario.exception.BusinessException;
 import com.uts.inventario.exception.ResourceNotFoundException;
+import com.uts.inventario.repository.AreaRepository;
+import com.uts.inventario.repository.AssetRepository;
+import com.uts.inventario.repository.AuditLogRepository;
+import com.uts.inventario.repository.InventoryMovementRepository;
 import com.uts.inventario.repository.RoleRepository;
 import com.uts.inventario.repository.UserRepository;
 import com.uts.inventario.security.SecurityUtils;
@@ -29,6 +33,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditLogRepository auditLogRepository;
+    private final InventoryMovementRepository inventoryMovementRepository;
+    private final AssetRepository assetRepository;
+    private final AreaRepository areaRepository;
 
     public List<UserResponse> getAllUsers(boolean includeInactive) {
         List<User> users = includeInactive
@@ -110,12 +118,22 @@ public class UserService {
         }
 
         try {
+            // Se conserva el historial (auditoría, movimientos, activos, áreas); solo se desvincula
+            // al usuario eliminado. audit_logs guarda "username" de forma independiente del FK,
+            // por lo que la trazabilidad no se pierde aunque la cuenta desaparezca.
+            auditLogRepository.detachUser(id);
+            inventoryMovementRepository.detachFromUser(id);
+            inventoryMovementRepository.detachToUser(id);
+            inventoryMovementRepository.detachCreatedBy(id);
+            assetRepository.detachAssignedUser(id);
+            assetRepository.detachCreatedBy(id);
+            areaRepository.detachResponsible(id);
+
             userRepository.delete(user);
             userRepository.flush();
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessException(
-                    "No se puede eliminar: el usuario tiene registros asociados en el sistema " +
-                    "(activos, movimientos o auditoría). Desactívalo en su lugar.");
+                    "No se puede eliminar: el usuario tiene registros asociados que no se pudieron desvincular automáticamente.");
         }
     }
 

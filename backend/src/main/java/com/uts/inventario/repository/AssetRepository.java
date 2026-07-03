@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,15 @@ import java.util.Optional;
 public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecificationExecutor<Asset> {
 
     Optional<Asset> findBySerialNumber(String serialNumber);
+
+    // El activo se conserva; solo se desvincula al usuario eliminado.
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Asset a SET a.assignedUser = null WHERE a.assignedUser.id = :userId")
+    void detachAssignedUser(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Asset a SET a.createdBy = null WHERE a.createdBy.id = :userId")
+    void detachCreatedBy(@Param("userId") Long userId);
 
     Optional<Asset> findByCodigo(String codigo);
 

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,19 @@ import java.util.List;
 public interface InventoryMovementRepository extends JpaRepository<InventoryMovement, Long>, JpaSpecificationExecutor<InventoryMovement> {
 
     Page<InventoryMovement> findByAssetId(Long assetId, Pageable pageable);
+
+    // Se conserva el movimiento (activo, fechas, área); solo se desvincula al usuario eliminado.
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE InventoryMovement m SET m.fromUser = null WHERE m.fromUser.id = :userId")
+    void detachFromUser(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE InventoryMovement m SET m.toUser = null WHERE m.toUser.id = :userId")
+    void detachToUser(@Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE InventoryMovement m SET m.createdBy = null WHERE m.createdBy.id = :userId")
+    void detachCreatedBy(@Param("userId") Long userId);
 
     @Query("""
         SELECT m FROM InventoryMovement m

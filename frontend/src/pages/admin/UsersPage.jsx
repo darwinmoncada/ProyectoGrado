@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, IconButton, Tooltip, Button,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField,
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -11,6 +11,7 @@ import LockResetIcon from '@mui/icons-material/LockReset';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useForm, Controller } from 'react-hook-form';
@@ -105,6 +106,7 @@ export default function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [resetTarget, setResetTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
@@ -185,16 +187,11 @@ export default function UsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       enqueueSnackbar('Usuario eliminado', { variant: 'success' });
+      setDeleteTarget(null);
     },
     onError: (err) =>
       enqueueSnackbar(err?.response?.data?.error || 'Error al eliminar el usuario', { variant: 'error' }),
   });
-
-  const handleDelete = (row) => {
-    if (window.confirm(`¿Eliminar al usuario "${row.username}"? Esta acción no se puede deshacer.`)) {
-      deleteMutation.mutate(row.id);
-    }
-  };
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -296,7 +293,7 @@ export default function UsersPage() {
             {isSuperAdmin && (
               <Tooltip title={isSelf ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}>
                 <span>
-                  <IconButton size="small" disabled={isSelf} onClick={() => handleDelete(row)}>
+                  <IconButton size="small" disabled={isSelf} onClick={() => setDeleteTarget(row)}>
                     <DeleteIcon fontSize="small" color={isSelf ? 'disabled' : 'error'} />
                   </IconButton>
                 </span>
@@ -420,6 +417,30 @@ export default function UsersPage() {
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WarningAmberIcon color="error" />
+          Eliminar Usuario
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Seguro que deseas eliminar a <strong>{deleteTarget?.fullName}</strong> ({deleteTarget?.username})?
+            Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate(deleteTarget.id)}
+          >
+            Eliminar
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
