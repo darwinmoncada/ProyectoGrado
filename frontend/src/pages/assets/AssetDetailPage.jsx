@@ -8,6 +8,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
@@ -335,6 +336,12 @@ export default function AssetDetailPage() {
     }
   };
 
+  const handleExportConsolidatedPdf = () => runPdfExport(
+    assetService.exportListPdf([id]),
+    `reporte-activo-${asset?.codigo || id}.pdf`,
+    'Reporte consolidado generado correctamente'
+  );
+
   const handleExportDetailPdf = () => runPdfExport(
     assetService.exportDetailPdf(id),
     `ficha-activo-${asset?.codigo || id}.pdf`,
@@ -367,6 +374,7 @@ export default function AssetDetailPage() {
             label={exportingPdf ? 'Generando...' : 'Exportar PDF'}
             disabled={exportingPdf}
             options={[
+              { label: 'Reporte Consolidado', description: 'Ficha resumida de este activo', onClick: handleExportConsolidatedPdf },
               { label: 'Ficha Técnica', description: 'Hoja de vida del activo', onClick: handleExportDetailPdf },
               { label: 'Historial de Traslados', description: 'Movimientos y custodios', onClick: handleExportMovementsPdf },
             ]}
@@ -423,9 +431,21 @@ export default function AssetDetailPage() {
       {/* ── Tab 1: Historial de movimientos ── */}
       {tab === 1 && (
         <Box>
-          <Typography variant="subtitle1" fontWeight={600} mb={2}>
-            Historial de Movimientos
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="subtitle1" fontWeight={600}>
+              Historial de Movimientos
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              color="secondary"
+              startIcon={<PictureAsPdfIcon />}
+              onClick={handleExportMovementsPdf}
+              disabled={exportingPdf || !movements || movements.length === 0}
+            >
+              Exportar Solo Movimientos
+            </Button>
+          </Box>
           {!movements || movements.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography color="text.secondary">Sin movimientos registrados</Typography>

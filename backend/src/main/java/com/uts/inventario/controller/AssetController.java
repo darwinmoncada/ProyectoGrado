@@ -142,6 +142,13 @@ public class AssetController {
         return buildPdfResponse(pdf, "hojas-de-vida.pdf");
     }
 
+    @PostMapping(value = "/pdf/movements", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Exportar historial colectivo de movimientos de una selección de activos")
+    public ResponseEntity<byte[]> exportCollectiveMovementsPdf(@RequestBody List<Long> assetIds) {
+        byte[] pdf = pdfReportService.generateCollectiveMovementsReport(assetIds);
+        return buildPdfResponse(pdf, "historial-colectivo-movimientos.pdf");
+    }
+
     @GetMapping(value = "/{id}/pdf/movements", produces = MediaType.APPLICATION_PDF_VALUE)
     @Operation(summary = "Exportar historial de traslados y movimientos de un activo en PDF")
     public ResponseEntity<byte[]> exportMovementsPdf(@PathVariable Long id) {

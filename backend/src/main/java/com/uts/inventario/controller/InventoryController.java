@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -40,12 +41,19 @@ public class InventoryController {
             @RequestParam(required = false) MovementType type,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("movementDate").descending());
         return ResponseEntity.ok(ApiResponse.success(
-                inventoryService.findAll(assetId, type, from, to, pageable)));
+                inventoryService.findAll(assetId, type, from, to, search, pageable)));
+    }
+
+    @GetMapping("/movements/stats")
+    @Operation(summary = "Estadísticas (KPIs) de movimientos de inventario")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getStats() {
+        return ResponseEntity.ok(ApiResponse.success(inventoryService.getStats()));
     }
 
     @GetMapping("/movements/{id}")

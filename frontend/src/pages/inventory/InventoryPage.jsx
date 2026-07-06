@@ -6,9 +6,14 @@ import {
   Alert, Divider, Grid, InputAdornment,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import { DatePicker } from '@mui/x-date-pickers';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useForm, Controller } from 'react-hook-form';
@@ -16,6 +21,7 @@ import { inventoryService } from '../../services/inventoryService';
 import { assetService } from '../../services/assetService';
 import { useAuth } from '../../context/AuthContext';
 import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS, ASSET_STATUS_LABELS } from '../../constants/labels';
+import StatCard from '../../components/common/StatCard';
 import dayjs from 'dayjs';
 
 const MOVEMENT_TYPES = Object.entries(MOVEMENT_TYPE_LABELS).map(([value, label]) => ({ value, label }));
@@ -29,13 +35,27 @@ export default function InventoryPage() {
   const [searching, setSearching]     = useState(false);
   const debounceRef = useRef(null);
 
+  const [filters, setFilters] = useState({ search: '', type: '', from: null, to: null });
+
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['movements', page],
-    queryFn: () => inventoryService.getMovements({ page, size: 15 }),
+    queryKey: ['movements', page, filters],
+    queryFn: () => inventoryService.getMovements({
+      page,
+      size: 15,
+      search: filters.search || undefined,
+      type: filters.type || undefined,
+      from: filters.from ? filters.from.startOf('day').toISOString() : undefined,
+      to: filters.to ? filters.to.endOf('day').toISOString() : undefined,
+    }),
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['movementStats'],
+    queryFn: inventoryService.getStats,
   });
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm({
@@ -99,6 +119,7 @@ export default function InventoryPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movements'] });
+      queryClient.invalidateQueries({ queryKey: ['movementStats'] });
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       enqueueSnackbar('Movimiento registrado exitosamente', { variant: 'success' });
       handleClose();
@@ -156,6 +177,91 @@ export default function InventoryPage() {
           </Button>
         )}
       </Box>
+
+      <Grid container spacing={2} mb={3}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Total Movimientos"
+            value={stats?.totalMovements ?? '—'}
+            icon={<SwapHorizIcon sx={{ color: '#1565C0', fontSize: 32 }} />}
+            color="#1565C0"
+            loading={!stats}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Entradas este mes"
+            value={stats?.entriesThisMonth ?? '—'}
+            icon={<LoginIcon sx={{ color: '#2E7D32', fontSize: 32 }} />}
+            color="#2E7D32"
+            loading={!stats}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Salidas / Bajas (este mes)"
+            value={stats?.exitsThisMonth ?? '—'}
+            icon={<LogoutIcon sx={{ color: '#C62828', fontSize: 32 }} />}
+            color="#C62828"
+            loading={!stats}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Equipos en Préstamo"
+            value={stats?.assetsOnLoan ?? '—'}
+            icon={<HandshakeIcon sx={{ color: '#F57C00', fontSize: 32 }} />}
+            color="#F57C00"
+            loading={!stats}
+          />
+        </Grid>
+      </Grid>
+
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+          <TextField
+            label="Buscar"
+            size="small"
+            value={filters.search}
+            onChange={(e) => { setFilters({ ...filters, search: e.target.value }); setPage(0); }}
+            placeholder="Activo, código u observación..."
+            sx={{ minWidth: 220 }}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
+            }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Tipo de Movimiento</InputLabel>
+            <Select
+              value={filters.type}
+              label="Tipo de Movimiento"
+              onChange={(e) => { setFilters({ ...filters, type: e.target.value }); setPage(0); }}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {MOVEMENT_TYPES.map((t) => (
+                <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <DatePicker
+            label="Desde"
+            value={filters.from}
+            onChange={(value) => { setFilters({ ...filters, from: value }); setPage(0); }}
+            slotProps={{ textField: { size: 'small', sx: { minWidth: 160 } } }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={filters.to}
+            onChange={(value) => { setFilters({ ...filters, to: value }); setPage(0); }}
+            slotProps={{ textField: { size: 'small', sx: { minWidth: 160 } } }}
+          />
+          {(filters.search || filters.type || filters.from || filters.to) && (
+            <Button size="small" onClick={() => { setFilters({ search: '', type: '', from: null, to: null }); setPage(0); }}>
+              Limpiar filtros
+            </Button>
+          )}
+        </Box>
+      </Paper>
 
       <Paper>
         <DataGrid

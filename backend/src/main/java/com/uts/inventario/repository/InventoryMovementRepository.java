@@ -45,4 +45,19 @@ public interface InventoryMovementRepository extends JpaRepository<InventoryMove
 
     @Query("SELECT m FROM InventoryMovement m ORDER BY m.movementDate DESC")
     List<InventoryMovement> findRecentMovements(Pageable pageable);
+
+    long countByMovementType(MovementType movementType);
+
+    long countByMovementTypeAndMovementDateBetween(MovementType movementType, java.time.LocalDateTime from, java.time.LocalDateTime to);
+
+    // Activos cuyo movimiento más reciente es un préstamo (LOAN) sin devolución posterior:
+    // se consideran "en préstamo" en este momento.
+    @Query("""
+        SELECT COUNT(DISTINCT m.asset.id) FROM InventoryMovement m
+        WHERE m.movementType = com.uts.inventario.enums.MovementType.LOAN
+        AND m.movementDate = (
+            SELECT MAX(m2.movementDate) FROM InventoryMovement m2 WHERE m2.asset.id = m.asset.id
+        )
+        """)
+    long countAssetsCurrentlyOnLoan();
 }

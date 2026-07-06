@@ -106,16 +106,6 @@ public class PdfReportService {
             addSectionTitle(document, "Activos Seleccionados (" + assets.size() + ")");
             addAssetsTable(document, assets);
 
-            List<InventoryMovement> movements = assets.stream()
-                    .flatMap(a -> inventoryMovementRepository.findByAssetIdOrderByMovementDateDesc(a.getId()).stream())
-                    .toList();
-
-            if (!movements.isEmpty()) {
-                document.newPage();
-                addSectionTitle(document, "Historial Consolidado de Movimientos");
-                addMovementsTable(document, movements);
-            }
-
             document.close();
         } catch (DocumentException e) {
             throw new IllegalStateException("Error al generar el PDF del reporte de activos", e);
@@ -193,33 +183,66 @@ public class PdfReportService {
             writer.setPageEvent(new CorporateHeaderFooter("Historial de Traslados y Movimientos"));
             document.open();
 
-            Paragraph identity = new Paragraph(asset.getName() + " · " + valueOrDash(asset.getCodigo()), FONT_SECTION);
-            identity.setSpacingAfter(2);
-            document.add(identity);
-
-            Paragraph identitySubtitle = new Paragraph(
-                    (asset.getAssetType() != null ? asset.getAssetType().getName() : "Sin asignar")
-                            + "  ·  Estado: " + asset.getStatus().getLabel()
-                            + "  ·  Área actual: " + (asset.getArea() != null ? asset.getArea().getName() : "Sin asignar"),
-                    FONT_SUBTITLE);
-            identitySubtitle.setSpacingAfter(14);
-            document.add(identitySubtitle);
-
-            if (movements.isEmpty()) {
-                Paragraph empty = new Paragraph("Este activo no registra movimientos ni traslados en el sistema.", FONT_VALUE);
-                document.add(empty);
-            } else {
-                addSectionTitle(document, "Cronología de Movimientos (" + movements.size() + ")");
-                for (InventoryMovement movement : movements) {
-                    addMovementCard(document, movement);
-                }
-            }
+            addAssetMovementSection(document, asset, movements);
 
             document.close();
         } catch (DocumentException e) {
             throw new IllegalStateException("Error al generar el reporte de historial de movimientos", e);
         }
         return out.toByteArray();
+    }
+
+    // ---------- 3b) Historial Colectivo de Movimientos (varios activos) ----------
+
+    @Transactional(readOnly = true)
+    public byte[] generateCollectiveMovementsReport(List<Long> assetIds) {
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        if (assets.isEmpty()) {
+            throw new ResourceNotFoundException("No se encontraron activos para exportar");
+        }
+
+        Document document = newDocument();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            writer.setPageEvent(new CorporateHeaderFooter("Historial Colectivo de Movimientos"));
+            document.open();
+
+            for (Asset asset : assets) {
+                List<InventoryMovement> movements = inventoryMovementRepository.findByAssetIdOrderByMovementDateDesc(asset.getId());
+                addAssetMovementSection(document, asset, movements);
+            }
+
+            document.close();
+        } catch (DocumentException e) {
+            throw new IllegalStateException("Error al generar el historial colectivo de movimientos", e);
+        }
+        return out.toByteArray();
+    }
+
+    private void addAssetMovementSection(Document document, Asset asset, List<InventoryMovement> movements) throws DocumentException {
+        Paragraph identity = new Paragraph(asset.getName() + " · " + valueOrDash(asset.getCodigo()), FONT_SECTION);
+        identity.setSpacingAfter(2);
+        document.add(identity);
+
+        Paragraph identitySubtitle = new Paragraph(
+                (asset.getAssetType() != null ? asset.getAssetType().getName() : "Sin asignar")
+                        + "  ·  Estado: " + asset.getStatus().getLabel()
+                        + "  ·  Área actual: " + (asset.getArea() != null ? asset.getArea().getName() : "Sin asignar"),
+                FONT_SUBTITLE);
+        identitySubtitle.setSpacingAfter(14);
+        document.add(identitySubtitle);
+
+        if (movements.isEmpty()) {
+            Paragraph empty = new Paragraph("Este activo no registra movimientos ni traslados en el sistema.", FONT_VALUE);
+            empty.setSpacingAfter(20);
+            document.add(empty);
+        } else {
+            addSectionTitle(document, "Cronología de Movimientos (" + movements.size() + ")");
+            for (InventoryMovement movement : movements) {
+                addMovementCard(document, movement);
+            }
+        }
     }
 
     private Document newDocument() {
@@ -251,39 +274,6 @@ public class PdfReportService {
             addBodyCell(table, asset.getAssetType() != null ? asset.getAssetType().getName() : "Sin asignar", bg);
             addBodyCell(table, asset.getArea() != null ? asset.getArea().getName() : "Sin asignar", bg);
             addBodyCell(table, asset.getStatus().getLabel(), bg);
-            alternate = !alternate;
-        }
-
-        document.add(table);
-    }
-
-    private void addMovementsTable(Document document, List<InventoryMovement> movements) throws DocumentException {
-        PdfPTable table = new PdfPTable(new float[]{1.6f, 1.4f, 1.3f, 1.3f, 1.3f, 1.4f, 1.7f});
-        table.setWidthPercentage(100);
-        table.setSpacingBefore(6);
-
-        addHeaderCell(table, "Activo");
-        addHeaderCell(table, "Fecha");
-        addHeaderCell(table, "Tipo");
-        addHeaderCell(table, "Área Origen");
-        addHeaderCell(table, "Área Destino");
-        addHeaderCell(table, "Usuario");
-        addHeaderCell(table, "Observaciones");
-
-        boolean alternate = false;
-        for (InventoryMovement m : movements) {
-            Color bg = alternate ? COLOR_ROW_ALT : Color.WHITE;
-            addBodyCell(table, m.getAsset() != null ? valueOrDash(m.getAsset().getName()) : "Sin asignar", bg);
-            addBodyCell(table, m.getMovementDate().format(DATETIME_FORMAT), bg);
-            addBodyCell(table, m.getMovementType().getLabel(), bg);
-            addBodyCell(table, m.getFromArea() != null ? m.getFromArea().getName() : "Sin asignar", bg);
-            addBodyCell(table, m.getToArea() != null ? m.getToArea().getName() : "Sin asignar", bg);
-            String user = m.getToUser() != null ? m.getToUser().getFullName()
-                    : m.getFromUser() != null ? m.getFromUser().getFullName() : "Sin asignar";
-            addBodyCell(table, user, bg);
-            String observations = m.getNotes() != null && !m.getNotes().isBlank() ? m.getNotes()
-                    : (m.getReason() != null && !m.getReason().isBlank() ? m.getReason() : "Sin observaciones");
-            addBodyCell(table, observations, bg);
             alternate = !alternate;
         }
 

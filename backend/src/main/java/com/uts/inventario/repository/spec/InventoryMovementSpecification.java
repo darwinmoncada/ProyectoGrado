@@ -12,6 +12,11 @@ import java.util.List;
 public class InventoryMovementSpecification {
 
     public static Specification<InventoryMovement> searchMovements(Long assetId, MovementType movementType, LocalDateTime from, LocalDateTime to) {
+        return searchMovements(assetId, movementType, from, to, null);
+    }
+
+    public static Specification<InventoryMovement> searchMovements(Long assetId, MovementType movementType,
+                                                                     LocalDateTime from, LocalDateTime to, String search) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -33,6 +38,16 @@ public class InventoryMovementSpecification {
             // Filtro por fecha hasta
             if (to != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("movementDate"), to));
+            }
+
+            // Búsqueda por palabra clave: nombre o código del activo, o notas del movimiento
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("asset").get("name")), pattern),
+                        cb.like(cb.lower(root.get("asset").get("codigo")), pattern),
+                        cb.like(cb.lower(root.get("notes")), pattern)
+                ));
             }
 
             // Ordenar por fecha descendente

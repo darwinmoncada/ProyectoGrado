@@ -13,30 +13,9 @@ import { networkService } from '../services/networkService';
 import { inventoryService } from '../services/inventoryService';
 import { MOVEMENT_TYPE_LABELS } from '../constants/labels';
 import EmptyValue from '../components/common/EmptyValue';
+import StatCard from '../components/common/StatCard';
 
 const COLORS = ['#1565C0', '#F57F17'];
-
-function StatCard({ title, value, icon, color, loading }) {
-  return (
-    <Card>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="body2" color="text.secondary">{title}</Typography>
-            {loading ? (
-              <Skeleton width={60} height={40} />
-            ) : (
-              <Typography variant="h4" fontWeight={700} color={color}>{value}</Typography>
-            )}
-          </Box>
-          <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: `${color}20` }}>
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function DashboardPage() {
   const { data: assetStats, isLoading: loadingAssets } = useQuery({

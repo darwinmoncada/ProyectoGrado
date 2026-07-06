@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
 import { esES } from '@mui/material/locale';
+import { useThemeMode } from './context/ThemeModeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/LoginPage';
@@ -14,12 +16,16 @@ import UsersPage from './pages/admin/UsersPage';
 import AuditPage from './pages/admin/AuditPage';
 import AreasPage from './pages/admin/AreasPage';
 
-const theme = createTheme(
+const getTheme = (mode) => createTheme(
   {
     palette: {
-      primary: { main: '#1565C0' },
-      secondary: { main: '#0288D1' },
-      background: { default: '#F5F7FA' },
+      mode,
+      primary: { main: mode === 'dark' ? '#5B9BD5' : '#1565C0' },
+      secondary: { main: mode === 'dark' ? '#4FC3F7' : '#0288D1' },
+      success: { main: mode === 'dark' ? '#66BB6A' : '#2E7D32' },
+      background: mode === 'dark'
+        ? { default: '#121212', paper: '#1E1E1E' }
+        : { default: '#F5F7FA', paper: '#FFFFFF' },
     },
     typography: {
       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -32,7 +38,10 @@ const theme = createTheme(
       },
       MuiCard: {
         styleOverrides: {
-          root: { borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
+          root: {
+            borderRadius: 12,
+            boxShadow: mode === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+          },
         },
       },
     },
@@ -41,6 +50,9 @@ const theme = createTheme(
 );
 
 export default function App() {
+  const { mode } = useThemeMode();
+  const theme = useMemo(() => getTheme(mode), [mode]);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

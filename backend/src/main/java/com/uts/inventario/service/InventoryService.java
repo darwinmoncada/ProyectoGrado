@@ -18,8 +18,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +38,26 @@ public class InventoryService {
 
     public PageResponse<InventoryMovement> findAll(Long assetId, MovementType type,
                                                     LocalDateTime from, LocalDateTime to, Pageable pageable) {
-        Page<InventoryMovement> page = movementRepository.findAll(InventoryMovementSpecification.searchMovements(assetId, type, from, to), pageable);
+        return findAll(assetId, type, from, to, null, pageable);
+    }
+
+    public PageResponse<InventoryMovement> findAll(Long assetId, MovementType type, LocalDateTime from,
+                                                    LocalDateTime to, String search, Pageable pageable) {
+        Page<InventoryMovement> page = movementRepository.findAll(
+                InventoryMovementSpecification.searchMovements(assetId, type, from, to, search), pageable);
         return PageResponse.from(page);
+    }
+
+    public Map<String, Object> getStats() {
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime now = LocalDateTime.now();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalMovements", movementRepository.count());
+        stats.put("entriesThisMonth", movementRepository.countByMovementTypeAndMovementDateBetween(MovementType.ENTRY, startOfMonth, now));
+        stats.put("exitsThisMonth", movementRepository.countByMovementTypeAndMovementDateBetween(MovementType.EXIT, startOfMonth, now));
+        stats.put("assetsOnLoan", movementRepository.countAssetsCurrentlyOnLoan());
+        return stats;
     }
 
     public List<InventoryMovement> findByAsset(Long assetId) {

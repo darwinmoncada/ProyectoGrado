@@ -1,17 +1,21 @@
 import {
   AppBar, Toolbar, IconButton, Typography, Box,
-  Avatar, Menu, MenuItem, Divider, Chip
+  Avatar, Menu, MenuItem, Divider, Chip, Tooltip
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import logoUts from '../../img/Logo-UTS-1.png'; 
+import { useThemeMode } from '../../context/ThemeModeContext';
+import logoUts from '../../img/Logo-UTS-1.png';
 import logoRedesImg from '../../img/Logo-REDES-1.png'; // Asegúrate de tener esta ruta correcta
 
 export default function Header({ drawerWidth, onMenuClick }) {
   const { user, logout } = useAuth();
+  const { mode, toggleColorMode } = useThemeMode();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -93,6 +97,11 @@ export default function Header({ drawerWidth, onMenuClick }) {
 
         {/* ================= PARTE DERECHA ================= */}
         <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
+          <Tooltip title={mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
+            <IconButton color="inherit" onClick={toggleColorMode}>
+              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Tooltip>
           {user && (
             <>
               {/* Rol del usuario */}

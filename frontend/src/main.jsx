@@ -8,6 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/es';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeModeProvider } from './context/ThemeModeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,9 +28,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <QueryClientProvider client={queryClient}>
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
           <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <ThemeModeProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </ThemeModeProvider>
           </SnackbarProvider>
         </LocalizationProvider>
       </QueryClientProvider>

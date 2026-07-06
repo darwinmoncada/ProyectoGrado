@@ -69,7 +69,7 @@ export default function AssetListPage() {
     runPdfExport(
       assetService.exportListPdf(ids),
       `reporte-activos-${ids.length}.pdf`,
-      `PDF generado con ${ids.length} activo(s) y su historial consolidado`
+      `PDF generado con ${ids.length} activo(s) seleccionado(s)`
     );
   };
 
@@ -83,6 +83,27 @@ export default function AssetListPage() {
       assetService.exportBatchSheetsPdf(ids),
       `hojas-de-vida-${ids.length}.pdf`,
       `Se generaron ${ids.length} hoja(s) de vida en un solo PDF`
+    );
+  };
+
+  const handleExportCollectiveMovements = () => {
+    if (!rowSelectionModel.length) {
+      enqueueSnackbar('Selecciona al menos un activo para exportar', { variant: 'info' });
+      return;
+    }
+    const ids = rowSelectionModel.map(Number);
+    runPdfExport(
+      assetService.exportCollectiveMovementsPdf(ids),
+      `historial-colectivo-${ids.length}.pdf`,
+      `Historial de movimientos generado para ${ids.length} activo(s)`
+    );
+  };
+
+  const handleExportRowConsolidated = (row) => {
+    runPdfExport(
+      assetService.exportListPdf([row.id]),
+      `reporte-activo-${row.codigo || row.id}.pdf`,
+      'Reporte consolidado generado'
     );
   };
 
@@ -154,6 +175,7 @@ export default function AssetListPage() {
             variant="icon"
             label="Exportar PDF"
             options={[
+              { label: 'Reporte Consolidado', description: 'Ficha resumida de este activo', onClick: () => handleExportRowConsolidated(row) },
               { label: 'Ficha Técnica', description: 'Hoja de vida del activo', onClick: () => handleExportRowDetail(row) },
               { label: 'Historial de Traslados', description: 'Movimientos y custodios', onClick: () => handleExportRowMovements(row) },
             ]}
@@ -187,13 +209,18 @@ export default function AssetListPage() {
             options={[
               {
                 label: 'Reporte Consolidado',
-                description: 'Tabla de activos + historial de movimientos',
+                description: 'Tabla resumida de los activos seleccionados',
                 onClick: handleExportConsolidated,
               },
               {
                 label: 'Hojas de Vida en Lote',
                 description: 'Una ficha técnica por cada activo seleccionado',
                 onClick: handleExportBatchSheets,
+              },
+              {
+                label: 'Historial Colectivo de Movimientos',
+                description: 'Cronología de traslados de todos los seleccionados',
+                onClick: handleExportCollectiveMovements,
               },
             ]}
           />
