@@ -8,7 +8,6 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -16,6 +15,7 @@ import { assetService } from '../../services/assetService';
 import { useAuth } from '../../context/AuthContext';
 import { ASSET_STATUS_LABELS, ASSET_STATUS_COLORS } from '../../constants/labels';
 import EmptyValue from '../../components/common/EmptyValue';
+import PdfExportMenu from '../../components/common/PdfExportMenu';
 import { downloadBlob, extractBlobErrorMessage } from '../../utils/fileDownload';
 
 export default function AssetListPage() {
@@ -47,21 +47,59 @@ export default function AssetListPage() {
     onError: (err) => enqueueSnackbar(err?.response?.data?.error || 'Error al eliminar', { variant: 'error' }),
   });
 
-  const handleExportPdf = async () => {
-    if (!rowSelectionModel.length) {
-      enqueueSnackbar('Selecciona al menos un activo para exportar', { variant: 'info' });
-      return;
-    }
+  const runPdfExport = async (exportPromise, filename, successMsg) => {
     setExportingPdf(true);
     try {
-      const blob = await assetService.exportListPdf(rowSelectionModel.map(Number));
-      downloadBlob(blob, `reporte-activos-${rowSelectionModel.length}.pdf`);
-      enqueueSnackbar(`PDF generado con ${rowSelectionModel.length} activo(s) y su historial consolidado`, { variant: 'success' });
+      const blob = await exportPromise;
+      downloadBlob(blob, filename);
+      enqueueSnackbar(successMsg, { variant: 'success' });
     } catch (err) {
       enqueueSnackbar(await extractBlobErrorMessage(err, 'Error al generar el PDF'), { variant: 'error' });
     } finally {
       setExportingPdf(false);
     }
+  };
+
+  const handleExportConsolidated = () => {
+    if (!rowSelectionModel.length) {
+      enqueueSnackbar('Selecciona al menos un activo para exportar', { variant: 'info' });
+      return;
+    }
+    const ids = rowSelectionModel.map(Number);
+    runPdfExport(
+      assetService.exportListPdf(ids),
+      `reporte-activos-${ids.length}.pdf`,
+      `PDF generado con ${ids.length} activo(s) y su historial consolidado`
+    );
+  };
+
+  const handleExportBatchSheets = () => {
+    if (!rowSelectionModel.length) {
+      enqueueSnackbar('Selecciona al menos un activo para exportar', { variant: 'info' });
+      return;
+    }
+    const ids = rowSelectionModel.map(Number);
+    runPdfExport(
+      assetService.exportBatchSheetsPdf(ids),
+      `hojas-de-vida-${ids.length}.pdf`,
+      `Se generaron ${ids.length} hoja(s) de vida en un solo PDF`
+    );
+  };
+
+  const handleExportRowDetail = (row) => {
+    runPdfExport(
+      assetService.exportDetailPdf(row.id),
+      `ficha-activo-${row.codigo || row.id}.pdf`,
+      'Ficha técnica generada'
+    );
+  };
+
+  const handleExportRowMovements = (row) => {
+    runPdfExport(
+      assetService.exportMovementsPdf(row.id),
+      `historial-movimientos-${row.codigo || row.id}.pdf`,
+      'Historial de traslados generado'
+    );
   };
 
   const columns = [
@@ -96,7 +134,7 @@ export default function AssetListPage() {
     {
       field: 'actions',
       headerName: 'Acciones',
-      width: 130,
+      width: 170,
       sortable: false,
       renderCell: ({ row }) => (
         <Box>
@@ -112,6 +150,14 @@ export default function AssetListPage() {
               </IconButton>
             </Tooltip>
           )}
+          <PdfExportMenu
+            variant="icon"
+            label="Exportar PDF"
+            options={[
+              { label: 'Ficha Técnica', description: 'Hoja de vida del activo', onClick: () => handleExportRowDetail(row) },
+              { label: 'Historial de Traslados', description: 'Movimientos y custodios', onClick: () => handleExportRowMovements(row) },
+            ]}
+          />
           {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN']) && (
             <Tooltip title="Eliminar">
               <IconButton
@@ -135,15 +181,22 @@ export default function AssetListPage() {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" fontWeight={700}>Activos Tecnológicos</Typography>
         <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<PictureAsPdfIcon />}
-            onClick={handleExportPdf}
+          <PdfExportMenu
+            label={exportingPdf ? 'Generando PDF...' : 'Exportar PDF'}
             disabled={rowSelectionModel.length === 0 || exportingPdf}
-          >
-            {exportingPdf ? 'Generando PDF...' : 'Exportar PDF'}
-          </Button>
+            options={[
+              {
+                label: 'Reporte Consolidado',
+                description: 'Tabla de activos + historial de movimientos',
+                onClick: handleExportConsolidated,
+              },
+              {
+                label: 'Hojas de Vida en Lote',
+                description: 'Una ficha técnica por cada activo seleccionado',
+                onClick: handleExportBatchSheets,
+              },
+            ]}
+          />
           {hasRole(['ROLE_ADMIN', 'ROLE_SUPERADMIN', 'ROLE_TECNICO']) && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => navigate('/assets/new')}>
               Nuevo Activo

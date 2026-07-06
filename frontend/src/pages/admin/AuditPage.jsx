@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
@@ -43,7 +43,7 @@ function buildAuditDescription(row) {
 export default function AuditPage() {
   const [filters, setFilters] = useState({ action: '', entityType: '', page: 0 });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['audit', filters],
     queryFn: () => api.get('/audit/logs', {
       params: {
@@ -53,7 +53,16 @@ export default function AuditPage() {
         size: 20,
       }
     }).then((r) => r.data.data),
+    staleTime: 0,
   });
+
+  // La auditoría debe reflejar eventos que acaban de ocurrir (ej. el login/logout
+  // que trajo al usuario a esta vista), así que no basta con el staleTime global:
+  // se fuerza un refetch explícito cada vez que el componente se monta.
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const columns = [
     { field: 'id', headerName: '#', width: 60 },

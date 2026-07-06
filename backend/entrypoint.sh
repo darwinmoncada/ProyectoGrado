@@ -21,8 +21,13 @@ if [ -n "$DATABASE_URL" ] && [ -z "$SPRING_DATASOURCE_URL" ]; then
 fi
 
 # Default Java options
+# file.encoding/sun.jnu.encoding se fuerzan a UTF-8 explícitamente: la imagen base
+# (Alpine, sin locales instaladas) no garantiza UTF-8 como charset por defecto en JDK 17
+# (JEP 400 "UTF-8 por defecto" solo llega en JDK 18+), lo que podía corromper tildes/eñes.
 java \
   -XX:+UseContainerSupport \
   -XX:MaxRAMPercentage=75.0 \
   -Djava.security.egd=file:/dev/./urandom \
+  -Dfile.encoding=UTF-8 \
+  -Dsun.jnu.encoding=UTF-8 \
   -jar app.jar

@@ -1,5 +1,6 @@
 package com.uts.inventario.service;
 
+import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -20,6 +21,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.uts.inventario.entity.Asset;
 import com.uts.inventario.entity.InventoryMovement;
 import com.uts.inventario.entity.User;
+import com.uts.inventario.enums.MovementType;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.AssetRepository;
 import com.uts.inventario.repository.InventoryMovementRepository;
@@ -33,12 +35,14 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Genera reportes PDF con identidad corporativa institucional (UTS) usando OpenPDF:
- * encabezado con logo y título, pie de página con responsable/fecha y numeración
- * "Página X de Y" en todas las páginas.
+ * Genera reportes PDF con identidad corporativa institucional (UTS + REDES) usando OpenPDF:
+ * encabezado con doble logo simétrico y título centrado, pie de página con responsable/fecha
+ * y numeración "Página X de Y" en todas las páginas.
  */
 @Service
 @RequiredArgsConstructor
@@ -52,6 +56,23 @@ public class PdfReportService {
     private static final Color COLOR_TEXT_MUTED = new Color(100, 100, 100);
     private static final Color COLOR_BORDER = new Color(220, 224, 230);
 
+    private static final Color COLOR_SUCCESS = new Color(46, 125, 50);
+    private static final Color COLOR_ERROR = new Color(211, 47, 47);
+    private static final Color COLOR_INFO = new Color(2, 136, 209);
+    private static final Color COLOR_WARNING = new Color(237, 108, 2);
+    private static final Color COLOR_DEFAULT = new Color(97, 97, 97);
+
+    private static final Map<MovementType, Color> MOVEMENT_TYPE_COLORS = new EnumMap<>(MovementType.class);
+    static {
+        MOVEMENT_TYPE_COLORS.put(MovementType.ENTRY, COLOR_SUCCESS);
+        MOVEMENT_TYPE_COLORS.put(MovementType.EXIT, COLOR_ERROR);
+        MOVEMENT_TYPE_COLORS.put(MovementType.TRANSFER, COLOR_INFO);
+        MOVEMENT_TYPE_COLORS.put(MovementType.LOAN, COLOR_WARNING);
+        MOVEMENT_TYPE_COLORS.put(MovementType.RETURN, COLOR_DEFAULT);
+        MOVEMENT_TYPE_COLORS.put(MovementType.MAINTENANCE_IN, COLOR_WARNING);
+        MOVEMENT_TYPE_COLORS.put(MovementType.MAINTENANCE_OUT, COLOR_SUCCESS);
+    }
+
     private static final Font FONT_TITLE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, COLOR_PRIMARY);
     private static final Font FONT_SUBTITLE = FontFactory.getFont(FontFactory.HELVETICA, 9, COLOR_TEXT_MUTED);
     private static final Font FONT_SECTION = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, COLOR_PRIMARY);
@@ -60,8 +81,13 @@ public class PdfReportService {
     private static final Font FONT_LABEL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, COLOR_TEXT_MUTED);
     private static final Font FONT_VALUE = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK);
     private static final Font FONT_FOOTER = FontFactory.getFont(FontFactory.HELVETICA, 8, COLOR_TEXT_MUTED);
+    private static final Font FONT_CARD_DATE = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.BLACK);
+    private static final Font FONT_CARD_LABEL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, COLOR_TEXT_MUTED);
+    private static final Font FONT_CARD_VALUE = FontFactory.getFont(FontFactory.HELVETICA, 9.5f, Color.BLACK);
 
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    // ---------- 1) Reporte General de Activos (selección múltiple) ----------
 
     @Transactional(readOnly = true)
     public byte[] generateAssetListReport(List<Long> assetIds) {
@@ -70,7 +96,7 @@ public class PdfReportService {
             throw new ResourceNotFoundException("No se encontraron activos para exportar");
         }
 
-        Document document = new Document(PageSize.A4, 36, 36, 95, 55);
+        Document document = newDocument();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             PdfWriter writer = PdfWriter.getInstance(document, out);
@@ -97,26 +123,107 @@ public class PdfReportService {
         return out.toByteArray();
     }
 
+    // ---------- 2) Ficha Técnica / Hoja de Vida individual ----------
+
     @Transactional(readOnly = true)
     public byte[] generateAssetDetailSheet(Long assetId) {
         Asset asset = assetRepository.findById(assetId)
                 .orElseThrow(() -> new ResourceNotFoundException("Activo no encontrado con id: " + assetId));
-        List<InventoryMovement> movements = inventoryMovementRepository.findByAssetIdOrderByMovementDateDesc(assetId);
 
-        Document document = new Document(PageSize.A4, 36, 36, 95, 55);
+        Document document = newDocument();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             PdfWriter writer = PdfWriter.getInstance(document, out);
             writer.setPageEvent(new CorporateHeaderFooter("Hoja de Vida de Equipo"));
             document.open();
 
-            addAssetDetailSheet(document, asset, movements);
+            addAssetDetailSheet(document, asset);
 
             document.close();
         } catch (DocumentException e) {
             throw new IllegalStateException("Error al generar la ficha PDF del activo", e);
         }
         return out.toByteArray();
+    }
+
+    // ---------- 2b) Hojas de Vida en Lote (varios activos, una ficha por cada uno) ----------
+
+    @Transactional(readOnly = true)
+    public byte[] generateBatchDetailSheets(List<Long> assetIds) {
+        List<Asset> assets = assetRepository.findAllById(assetIds);
+        if (assets.isEmpty()) {
+            throw new ResourceNotFoundException("No se encontraron activos para exportar");
+        }
+
+        Document document = newDocument();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            writer.setPageEvent(new CorporateHeaderFooter("Hojas de Vida de Equipo"));
+            document.open();
+
+            boolean first = true;
+            for (Asset asset : assets) {
+                if (!first) {
+                    document.newPage();
+                }
+                addAssetDetailSheet(document, asset);
+                first = false;
+            }
+
+            document.close();
+        } catch (DocumentException e) {
+            throw new IllegalStateException("Error al generar las fichas PDF en lote", e);
+        }
+        return out.toByteArray();
+    }
+
+    // ---------- 3) Reporte de Historial de Traslados y Movimientos (un activo) ----------
+
+    @Transactional(readOnly = true)
+    public byte[] generateMovementHistoryReport(Long assetId) {
+        Asset asset = assetRepository.findById(assetId)
+                .orElseThrow(() -> new ResourceNotFoundException("Activo no encontrado con id: " + assetId));
+        List<InventoryMovement> movements = inventoryMovementRepository.findByAssetIdOrderByMovementDateDesc(assetId);
+
+        Document document = newDocument();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            writer.setPageEvent(new CorporateHeaderFooter("Historial de Traslados y Movimientos"));
+            document.open();
+
+            Paragraph identity = new Paragraph(asset.getName() + " · " + valueOrDash(asset.getCodigo()), FONT_SECTION);
+            identity.setSpacingAfter(2);
+            document.add(identity);
+
+            Paragraph identitySubtitle = new Paragraph(
+                    (asset.getAssetType() != null ? asset.getAssetType().getName() : "Sin asignar")
+                            + "  ·  Estado: " + asset.getStatus().getLabel()
+                            + "  ·  Área actual: " + (asset.getArea() != null ? asset.getArea().getName() : "Sin asignar"),
+                    FONT_SUBTITLE);
+            identitySubtitle.setSpacingAfter(14);
+            document.add(identitySubtitle);
+
+            if (movements.isEmpty()) {
+                Paragraph empty = new Paragraph("Este activo no registra movimientos ni traslados en el sistema.", FONT_VALUE);
+                document.add(empty);
+            } else {
+                addSectionTitle(document, "Cronología de Movimientos (" + movements.size() + ")");
+                for (InventoryMovement movement : movements) {
+                    addMovementCard(document, movement);
+                }
+            }
+
+            document.close();
+        } catch (DocumentException e) {
+            throw new IllegalStateException("Error al generar el reporte de historial de movimientos", e);
+        }
+        return out.toByteArray();
+    }
+
+    private Document newDocument() {
+        return new Document(PageSize.A4, 36, 36, 100, 55);
     }
 
     // ---------- Contenido: reporte de lista ----------
@@ -183,9 +290,9 @@ public class PdfReportService {
         document.add(table);
     }
 
-    // ---------- Contenido: ficha individual ----------
+    // ---------- Contenido: ficha individual (Hoja de Vida) ----------
 
-    private void addAssetDetailSheet(Document document, Asset asset, List<InventoryMovement> movements) throws DocumentException {
+    private void addAssetDetailSheet(Document document, Asset asset) throws DocumentException {
         Paragraph subtitle = new Paragraph(asset.getName() + " · " + valueOrDash(asset.getCodigo()), FONT_SECTION);
         subtitle.setSpacingAfter(10);
         document.add(subtitle);
@@ -227,11 +334,6 @@ public class PdfReportService {
             document.add(netTable);
         }
 
-        if (!movements.isEmpty()) {
-            addSectionTitle(document, "Historial de Movimientos");
-            addMovementsTable(document, movements);
-        }
-
         addSignatureBlock(document);
     }
 
@@ -257,6 +359,82 @@ public class PdfReportService {
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setPaddingTop(paddingTop);
         return cell;
+    }
+
+    // ---------- Contenido: tarjetas de historial de traslados (timeline) ----------
+
+    private void addMovementCard(Document document, InventoryMovement movement) throws DocumentException {
+        Color typeColor = MOVEMENT_TYPE_COLORS.getOrDefault(movement.getMovementType(), COLOR_DEFAULT);
+
+        PdfPTable card = new PdfPTable(new float[]{0.12f, 5f});
+        card.setWidthPercentage(100);
+        card.setSpacingAfter(10);
+        card.setKeepTogether(true);
+
+        PdfPCell accent = new PdfPCell();
+        accent.setBackgroundColor(typeColor);
+        accent.setBorder(Rectangle.NO_BORDER);
+        card.addCell(accent);
+
+        PdfPCell content = new PdfPCell();
+        content.setBorderColor(COLOR_BORDER);
+        content.setBorderWidth(0.75f);
+        content.setPadding(10);
+
+        Paragraph headerLine = new Paragraph();
+        headerLine.add(new Chunk(movement.getMovementDate().format(DATETIME_FORMAT), FONT_CARD_DATE));
+        headerLine.add(new Chunk("   ", FONT_CARD_VALUE));
+        Font badgeFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, typeColor);
+        headerLine.add(new Chunk(movement.getMovementType().getLabel().toUpperCase(), badgeFont));
+        if (movement.getReferenceNumber() != null && !movement.getReferenceNumber().isBlank()) {
+            headerLine.add(new Chunk("   ·   Referencia: " + movement.getReferenceNumber(), FONT_SUBTITLE));
+        }
+        content.addElement(headerLine);
+
+        Paragraph areaLine = new Paragraph();
+        areaLine.setSpacingBefore(6);
+        areaLine.add(new Chunk("Área origen: ", FONT_CARD_LABEL));
+        areaLine.add(new Chunk(movement.getFromArea() != null ? movement.getFromArea().getName() : "Sin asignar", FONT_CARD_VALUE));
+        areaLine.add(new Chunk("     →     ", FONT_CARD_LABEL));
+        areaLine.add(new Chunk("Área destino: ", FONT_CARD_LABEL));
+        areaLine.add(new Chunk(movement.getToArea() != null ? movement.getToArea().getName() : "Sin asignar", FONT_CARD_VALUE));
+        content.addElement(areaLine);
+
+        Paragraph userLine = new Paragraph();
+        userLine.setSpacingBefore(4);
+        userLine.add(new Chunk("Custodio anterior: ", FONT_CARD_LABEL));
+        userLine.add(new Chunk(movement.getFromUser() != null ? movement.getFromUser().getFullName() : "Sin asignar", FONT_CARD_VALUE));
+        userLine.add(new Chunk("     →     ", FONT_CARD_LABEL));
+        userLine.add(new Chunk("Custodio nuevo: ", FONT_CARD_LABEL));
+        userLine.add(new Chunk(movement.getToUser() != null ? movement.getToUser().getFullName() : "Sin asignar", FONT_CARD_VALUE));
+        content.addElement(userLine);
+
+        String reason = movement.getReason() != null && !movement.getReason().isBlank() ? movement.getReason() : null;
+        String notes = movement.getNotes() != null && !movement.getNotes().isBlank() ? movement.getNotes() : null;
+        if (reason != null || notes != null) {
+            Paragraph detailLine = new Paragraph();
+            detailLine.setSpacingBefore(4);
+            if (reason != null) {
+                detailLine.add(new Chunk("Motivo: ", FONT_CARD_LABEL));
+                detailLine.add(new Chunk(reason, FONT_CARD_VALUE));
+            }
+            if (reason != null && notes != null) {
+                detailLine.add(new Chunk("     ·     ", FONT_CARD_LABEL));
+            }
+            if (notes != null) {
+                detailLine.add(new Chunk("Notas: ", FONT_CARD_LABEL));
+                detailLine.add(new Chunk(notes, FONT_CARD_VALUE));
+            }
+            content.addElement(detailLine);
+        }
+
+        String registeredBy = movement.getCreatedBy() != null ? movement.getCreatedBy().getFullName() : "Sistema";
+        Paragraph registeredLine = new Paragraph("Registrado por: " + registeredBy, FONT_SUBTITLE);
+        registeredLine.setSpacingBefore(6);
+        content.addElement(registeredLine);
+
+        card.addCell(content);
+        document.add(card);
     }
 
     // ---------- Utilidades de tabla ----------
@@ -320,17 +498,24 @@ public class PdfReportService {
 
     private static class CorporateHeaderFooter extends PdfPageEventHelper {
         private final String reportTitle;
-        private Image logo;
+        private Image logoUts;
+        private Image logoRedes;
         private PdfTemplate totalPagesTemplate;
 
         CorporateHeaderFooter(String reportTitle) {
             this.reportTitle = reportTitle;
+            logoUts = loadLogo("branding/logo-uts.png", 78, 38);
+            logoRedes = loadLogo("branding/logo-redes.png", 55, 38);
+        }
+
+        private Image loadLogo(String classpathLocation, float maxWidth, float maxHeight) {
             try {
-                ClassPathResource resource = new ClassPathResource("branding/logo-uts.png");
-                logo = Image.getInstance(resource.getURL());
-                logo.scaleToFit(85, 42);
+                ClassPathResource resource = new ClassPathResource(classpathLocation);
+                Image image = Image.getInstance(resource.getURL());
+                image.scaleToFit(maxWidth, maxHeight);
+                return image;
             } catch (Exception e) {
-                logo = null;
+                return null;
             }
         }
 
@@ -346,25 +531,35 @@ public class PdfReportService {
             float pageHeight = document.getPageSize().getHeight();
             float headerBaseline = pageHeight - 30;
 
-            if (logo != null) {
+            // Logos simétricos: UTS a la izquierda, REDES a la derecha
+            if (logoUts != null) {
                 try {
-                    logo.setAbsolutePosition(36, headerBaseline - 32);
-                    cb.addImage(logo);
+                    logoUts.setAbsolutePosition(36, headerBaseline - 30);
+                    cb.addImage(logoUts);
+                } catch (Exception ignored) {
+                    // Si falla el dibujo puntual del logo, el resto del encabezado se dibuja igual.
+                }
+            }
+            if (logoRedes != null) {
+                try {
+                    logoRedes.setAbsolutePosition(pageWidth - 36 - logoRedes.getScaledWidth(), headerBaseline - 30);
+                    cb.addImage(logoRedes);
                 } catch (Exception ignored) {
                     // Si falla el dibujo puntual del logo, el resto del encabezado se dibuja igual.
                 }
             }
 
-            ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT, new Phrase(reportTitle, FONT_TITLE),
-                    pageWidth - 36, headerBaseline - 6, 0);
-            ColumnText.showTextAligned(cb, Element.ALIGN_RIGHT,
+            // Título y subtítulo institucional centrados entre ambos logos
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER, new Phrase(reportTitle, FONT_TITLE),
+                    pageWidth / 2, headerBaseline - 6, 0);
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER,
                     new Phrase("Sistema de Inventario TI · Unidades Tecnológicas de Santander", FONT_SUBTITLE),
-                    pageWidth - 36, headerBaseline - 22, 0);
+                    pageWidth / 2, headerBaseline - 22, 0);
 
             cb.setColorStroke(COLOR_PRIMARY);
             cb.setLineWidth(1f);
-            cb.moveTo(36, headerBaseline - 40);
-            cb.lineTo(pageWidth - 36, headerBaseline - 40);
+            cb.moveTo(36, headerBaseline - 44);
+            cb.lineTo(pageWidth - 36, headerBaseline - 44);
             cb.stroke();
 
             User currentUser = SecurityUtils.getCurrentUser();

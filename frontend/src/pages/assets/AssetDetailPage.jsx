@@ -8,7 +8,6 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
@@ -23,6 +22,7 @@ import {
   NETWORK_STATUS_LABELS, NETWORK_STATUS_COLORS,
 } from '../../constants/labels';
 import EmptyValue from '../../components/common/EmptyValue';
+import PdfExportMenu from '../../components/common/PdfExportMenu';
 import { downloadBlob, extractBlobErrorMessage } from '../../utils/fileDownload';
 import dayjs from 'dayjs';
 
@@ -322,18 +322,30 @@ export default function AssetDetailPage() {
     enabled: tab === 1,
   });
 
-  const handleExportDetailPdf = async () => {
+  const runPdfExport = async (exportPromise, filename, successMsg) => {
     setExportingPdf(true);
     try {
-      const blob = await assetService.exportDetailPdf(id);
-      downloadBlob(blob, `ficha-activo-${asset?.codigo || id}.pdf`);
-      enqueueSnackbar('Ficha PDF generada correctamente', { variant: 'success' });
+      const blob = await exportPromise;
+      downloadBlob(blob, filename);
+      enqueueSnackbar(successMsg, { variant: 'success' });
     } catch (err) {
-      enqueueSnackbar(await extractBlobErrorMessage(err, 'Error al generar la ficha PDF'), { variant: 'error' });
+      enqueueSnackbar(await extractBlobErrorMessage(err, 'Error al generar el PDF'), { variant: 'error' });
     } finally {
       setExportingPdf(false);
     }
   };
+
+  const handleExportDetailPdf = () => runPdfExport(
+    assetService.exportDetailPdf(id),
+    `ficha-activo-${asset?.codigo || id}.pdf`,
+    'Ficha técnica generada correctamente'
+  );
+
+  const handleExportMovementsPdf = () => runPdfExport(
+    assetService.exportMovementsPdf(id),
+    `historial-movimientos-${asset?.codigo || id}.pdf`,
+    'Historial de traslados generado correctamente'
+  );
 
   if (isLoading) return <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">Error al cargar el activo</Alert>;
@@ -351,15 +363,14 @@ export default function AssetDetailPage() {
           <Chip label={ASSET_STATUS_LABELS[asset?.status] || asset?.statusLabel || asset?.status} color={ASSET_STATUS_COLORS[asset?.status]} />
         </Box>
         <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<PictureAsPdfIcon />}
-            onClick={handleExportDetailPdf}
+          <PdfExportMenu
+            label={exportingPdf ? 'Generando...' : 'Exportar PDF'}
             disabled={exportingPdf}
-          >
-            {exportingPdf ? 'Generando...' : 'Exportar Ficha PDF'}
-          </Button>
+            options={[
+              { label: 'Ficha Técnica', description: 'Hoja de vida del activo', onClick: handleExportDetailPdf },
+              { label: 'Historial de Traslados', description: 'Movimientos y custodios', onClick: handleExportMovementsPdf },
+            ]}
+          />
           {canEdit && (
             <Button variant="contained" startIcon={<EditIcon />}
               onClick={() => navigate(`/assets/${id}/edit`)}>

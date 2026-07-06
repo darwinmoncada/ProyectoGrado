@@ -129,10 +129,24 @@ public class AssetController {
     }
 
     @PostMapping(value = "/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
-    @Operation(summary = "Exportar reporte PDF de una selección de activos")
+    @Operation(summary = "Exportar reporte consolidado PDF de una selección de activos")
     public ResponseEntity<byte[]> exportListPdf(@RequestBody List<Long> assetIds) {
         byte[] pdf = pdfReportService.generateAssetListReport(assetIds);
         return buildPdfResponse(pdf, "reporte-activos.pdf");
+    }
+
+    @PostMapping(value = "/pdf/batch-sheets", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Exportar hojas de vida en lote (una ficha por cada activo seleccionado)")
+    public ResponseEntity<byte[]> exportBatchSheetsPdf(@RequestBody List<Long> assetIds) {
+        byte[] pdf = pdfReportService.generateBatchDetailSheets(assetIds);
+        return buildPdfResponse(pdf, "hojas-de-vida.pdf");
+    }
+
+    @GetMapping(value = "/{id}/pdf/movements", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Exportar historial de traslados y movimientos de un activo en PDF")
+    public ResponseEntity<byte[]> exportMovementsPdf(@PathVariable Long id) {
+        byte[] pdf = pdfReportService.generateMovementHistoryReport(id);
+        return buildPdfResponse(pdf, "historial-movimientos-" + id + ".pdf");
     }
 
     private ResponseEntity<byte[]> buildPdfResponse(byte[] pdf, String filename) {

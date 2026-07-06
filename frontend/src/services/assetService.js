@@ -15,6 +15,10 @@ export const assetService = {
   getUsers: () => api.get('/users').then((r) => r.data.data),
   exportListPdf: (assetIds) =>
     api.post('/assets/pdf', assetIds, { responseType: 'blob' }).then((r) => r.data),
+  exportBatchSheetsPdf: (assetIds) =>
+    api.post('/assets/pdf/batch-sheets', assetIds, { responseType: 'blob' }).then((r) => r.data),
   exportDetailPdf: (id) =>
     api.get(`/assets/${id}/pdf`, { responseType: 'blob' }).then((r) => r.data),
+  exportMovementsPdf: (id) =>
+    api.get(`/assets/${id}/pdf/movements`, { responseType: 'blob' }).then((r) => r.data),
 };
