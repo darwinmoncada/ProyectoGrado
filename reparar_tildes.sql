@@ -1,17 +1,30 @@
 -- ============================================================================
--- Corrección de corrupción de codificación (tildes/eñes -> '?' literal)
+-- reparar_tildes.sql — Corrección de corrupción de codificación
+-- (tildes/eñes perdidas -> '?' literal durante la importación desde Neon)
 -- ----------------------------------------------------------------------------
--- Causa raíz: el dump importado desde Neon se generó/redirigió con una
--- codificación distinta a UTF-8, y cada carácter acentuado o "ñ" quedó
--- reemplazado por el byte '?' (0x3F) literal. Es pérdida de datos: no se
--- puede "recalcular" la tilde original, solo reponerla por diccionario a
--- partir del texto real de este inventario (nombres de activos/áreas ya
--- verificados manualmente contra la base de datos local).
+-- Causa raíz: el dump se generó/transfirió con una codificación distinta a
+-- UTF-8 (típicamente al redirigir la salida a través de PowerShell, que por
+-- defecto no preserva bytes UTF-8 en pipes/redirecciones), y cada carácter
+-- acentuado o "ñ" quedó reemplazado por el byte '?' (0x3F) literal. Es pérdida
+-- de datos: no se puede "recalcular" la tilde original, solo reponerla por
+-- diccionario a partir del texto real de este inventario (nombres de
+-- activos/áreas ya verificados manualmente contra la base de datos local).
 --
 -- Cada UPDATE reemplaza UN fragmento de palabra a la vez y solo toca las filas
 -- donde ese fragmento realmente aparece (WHERE columna LIKE '%fragmento%'),
 -- así que el script es idempotente: correrlo dos veces no tiene efecto
 -- adicional una vez corregidos los datos.
+--
+-- MODO DE USO SEGURO (no uses "< reparar_tildes.sql" en PowerShell: la
+-- redirección puede reinterpretar la codificación del archivo y corromper las
+-- tildes de reemplazo antes de que lleguen a Postgres). En su lugar:
+--
+--   docker cp reparar_tildes.sql inventario_db:/tmp/reparar_tildes.sql
+--   docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/reparar_tildes.sql
+--
+-- "docker cp" copia los bytes del archivo tal cual (sin pasar por la consola
+-- de PowerShell), y "psql -f" lo lee directamente desde el filesystem del
+-- contenedor.
 -- ============================================================================
 
 BEGIN;

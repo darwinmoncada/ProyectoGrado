@@ -51,13 +51,21 @@ proyecto, variable `DATABASE_URL`). **No necesitas instalar PostgreSQL en tu equ
 puedes usar Docker para ejecutar `pg_dump` directamente:
 
 ```powershell
-docker run --rm postgres:16-alpine pg_dump "TU_DATABASE_URL_DE_ENV.TXT" > dump_neon.sql
+docker run --rm -v "${PWD}:/backup" postgres:16-alpine sh -c "pg_dump 'TU_DATABASE_URL_DE_ENV.TXT' > /backup/dump_neon.sql"
 ```
 
 Reemplaza `TU_DATABASE_URL_DE_ENV.TXT` por el valor completo de `DATABASE_URL` que aparece
-en `env.txt` (cópialo tal cual, entre comillas).
+en `env.txt` (cópialo tal cual, entre comillas simples).
 
 Esto genera un archivo `dump_neon.sql` en la carpeta actual con todos tus datos.
+
+> ⚠️ **Por qué el comando escribe el archivo así y no con `> dump_neon.sql` directo en
+> PowerShell**: PowerShell reinterpreta la salida de los comandos antes de redirigirla con
+> `>`, y por defecto la guarda en UTF-16 en vez de UTF-8 — eso corrompe cualquier tilde o
+> "ñ" del dump antes de que toque el disco (así se originó el problema de "Almac??n",
+> "C??mara", etc. la primera vez). Montando la carpeta actual como `/backup` dentro del
+> contenedor, la redirección `>` ocurre en el `sh` de Linux del contenedor, que sí preserva
+> UTF-8 correctamente — PowerShell nunca toca el contenido del archivo.
 
 ### Alternativa con interfaz gráfica (pgAdmin o DBeaver)
 
@@ -72,14 +80,38 @@ Si prefieres no usar la terminal:
 
 ## Paso 3 — Importar el respaldo en la base de datos local
 
-Con el contenedor `inventario_db` corriendo (Paso 1), ejecuta:
+Con el contenedor `inventario_db` corriendo (Paso 1), copia el archivo **directamente
+dentro del contenedor** con `docker cp` y ejecútalo desde ahí con `psql -f`:
 
 ```powershell
-docker exec -i inventario_db psql -U postgres -d inventario_uts -f - < dump_neon.sql
+docker cp dump_neon.sql inventario_db:/tmp/dump_neon.sql
+docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/dump_neon.sql
 ```
 
-Si usaste pgAdmin/DBeaver para generar el `.sql`, el mismo comando funciona apuntando a
-esa ruta de archivo.
+> ⚠️ **No uses `docker exec -i ... < dump_neon.sql`**: esa redirección hace que PowerShell
+> lea el archivo y lo reenvíe por la tubería del proceso, reinterpretando su codificación en
+> el camino — es la otra mitad de la causa de la corrupción de tildes/eñes ("Almac??n",
+> "C??mara IP", etc.) que tuvimos que reparar manualmente la primera vez. `docker cp` copia
+> los bytes del archivo tal cual al filesystem del contenedor (sin pasar por PowerShell), y
+> `psql -f` lo lee directamente desde ahí — así se preserva UTF-8 de punta a punta.
+
+Si usaste pgAdmin/DBeaver para generar el `.sql`, el mismo par de comandos funciona
+apuntando al nombre de ese archivo.
+
+### Si los datos ya quedaron con tildes corruptas (`Almac??n`, `C??mara`, etc.)
+
+Si importaste un dump con el método antiguo (con `<` en PowerShell) antes de esta guía, usa
+el script de reparación `reparar_tildes.sql` incluido en la raíz del proyecto — corrige por
+diccionario los patrones de corrupción conocidos sin necesidad de reimportar nada:
+
+```powershell
+docker cp reparar_tildes.sql inventario_db:/tmp/reparar_tildes.sql
+docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/reparar_tildes.sql
+```
+
+Es idempotente: puedes ejecutarlo más de una vez sin efectos secundarios. Al final imprime
+una consulta de verificación — si no devuelve filas, ya no queda ningún `?` corrupto en
+`areas`, `asset_types` ni `assets`.
 
 ## Paso 4 — Iniciar el sistema completo
 
