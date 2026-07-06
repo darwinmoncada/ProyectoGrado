@@ -8,6 +8,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
@@ -22,6 +23,7 @@ import {
   NETWORK_STATUS_LABELS, NETWORK_STATUS_COLORS,
 } from '../../constants/labels';
 import EmptyValue from '../../components/common/EmptyValue';
+import { downloadBlob, extractBlobErrorMessage } from '../../utils/fileDownload';
 import dayjs from 'dayjs';
 
 const NET_DEFAULTS = {
@@ -305,7 +307,9 @@ export default function AssetDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { hasRole } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
   const [tab, setTab] = useState(0);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const { data: asset, isLoading, error } = useQuery({
     queryKey: ['asset', id],
@@ -317,6 +321,19 @@ export default function AssetDetailPage() {
     queryFn: () => inventoryService.getByAsset(id),
     enabled: tab === 1,
   });
+
+  const handleExportDetailPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const blob = await assetService.exportDetailPdf(id);
+      downloadBlob(blob, `ficha-activo-${asset?.codigo || id}.pdf`);
+      enqueueSnackbar('Ficha PDF generada correctamente', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(await extractBlobErrorMessage(err, 'Error al generar la ficha PDF'), { variant: 'error' });
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   if (isLoading) return <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">Error al cargar el activo</Alert>;
@@ -333,12 +350,23 @@ export default function AssetDetailPage() {
           <Typography variant="h5" fontWeight={700}>{asset?.name}</Typography>
           <Chip label={ASSET_STATUS_LABELS[asset?.status] || asset?.statusLabel || asset?.status} color={ASSET_STATUS_COLORS[asset?.status]} />
         </Box>
-        {canEdit && (
-          <Button variant="contained" startIcon={<EditIcon />}
-            onClick={() => navigate(`/assets/${id}/edit`)}>
-            Editar
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            startIcon={<PictureAsPdfIcon />}
+            onClick={handleExportDetailPdf}
+            disabled={exportingPdf}
+          >
+            {exportingPdf ? 'Generando...' : 'Exportar Ficha PDF'}
           </Button>
-        )}
+          {canEdit && (
+            <Button variant="contained" startIcon={<EditIcon />}
+              onClick={() => navigate(`/assets/${id}/edit`)}>
+              Editar
+            </Button>
+          )}
+        </Box>
       </Box>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>

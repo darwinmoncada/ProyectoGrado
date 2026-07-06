@@ -13,7 +13,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000,
+      // Corto a propósito: evita que al volver a una vista se muestren datos desactualizados
+      // (antes 5 min hacía que cambiar de pestaña no disparara un refetch hasta hacer F5).
+      staleTime: 30 * 1000,
+      refetchOnWindowFocus: true,
     },
   },
 });

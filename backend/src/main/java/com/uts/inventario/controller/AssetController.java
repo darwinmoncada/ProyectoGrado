@@ -6,6 +6,7 @@ import com.uts.inventario.dto.response.AssetResponse;
 import com.uts.inventario.dto.response.PageResponse;
 import com.uts.inventario.enums.AssetStatus;
 import com.uts.inventario.service.AssetService;
+import com.uts.inventario.service.PdfReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,11 +16,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,6 +34,7 @@ import java.util.Map;
 public class AssetController {
 
     private final AssetService assetService;
+    private final PdfReportService pdfReportService;
 
     @GetMapping
     @Operation(summary = "Listar activos con filtros y paginación")
@@ -114,6 +119,27 @@ public class AssetController {
     @Operation(summary = "Estadísticas del dashboard de activos")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStats() {
         return ResponseEntity.ok(ApiResponse.success(assetService.getDashboardStats()));
+    }
+
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Exportar ficha técnica (hoja de vida) de un activo en PDF")
+    public ResponseEntity<byte[]> exportDetailPdf(@PathVariable Long id) {
+        byte[] pdf = pdfReportService.generateAssetDetailSheet(id);
+        return buildPdfResponse(pdf, "ficha-activo-" + id + ".pdf");
+    }
+
+    @PostMapping(value = "/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "Exportar reporte PDF de una selección de activos")
+    public ResponseEntity<byte[]> exportListPdf(@RequestBody List<Long> assetIds) {
+        byte[] pdf = pdfReportService.generateAssetListReport(assetIds);
+        return buildPdfResponse(pdf, "reporte-activos.pdf");
+    }
+
+    private ResponseEntity<byte[]> buildPdfResponse(byte[] pdf, String filename) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     private String getClientIp(HttpServletRequest request) {
