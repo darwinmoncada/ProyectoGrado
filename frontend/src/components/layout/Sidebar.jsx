@@ -133,7 +133,7 @@ export default function Sidebar({ drawerWidth, collapsedWidth = 64, collapsed = 
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
           <NetworkInfoBanner />
           <Typography variant="caption" color="text.secondary">
-            v1.0.0 © 2025 UTS
+            v1.0.0 © 2026 UTS
           </Typography>
         </Box>
       )}

@@ -1,0 +1,4 @@
+Esta carpeta almacena los respaldos generados por respaldar_datos.bat
+(backup_AAAA_MM_DD.sql). Este archivo solo existe para que la carpeta
+se conserve vacía en el control de versiones y en el paquete de entrega
+(Compress-Archive de PowerShell descarta carpetas sin ningún archivo dentro).

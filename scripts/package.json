@@ -1,0 +1,9 @@
+{
+  "name": "sync-neon-a-local",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Script de sincronización binaria Neon -> Postgres local (ver INSTRUCCIONES_DESPLIEGUE.md)",
+  "dependencies": {
+    "pg": "^8.11.5"
+  }
+}

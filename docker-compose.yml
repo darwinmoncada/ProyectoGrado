@@ -1,3 +1,5 @@
+name: proyectogrado
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -13,6 +15,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Precarga de datos: Postgres ejecuta automáticamente cualquier script en
+      # docker-entrypoint-initdb.d/ la PRIMERA vez que arranca con un volumen
+      # vacío (nunca en arranques posteriores, aunque el archivo cambie). Así,
+      # el comité de grado obtiene el sistema con las 11 tablas y datos reales
+      # ya cargados desde el primer "iniciar_sistema.bat", sin depender de
+      # internet ni de Neon. init.sql se generó con pg_dump -f dentro del
+      # propio contenedor (nunca por redirección de shell) — ver
+      # INSTRUCCIONES_DESPLIEGUE.md sección 4 para el porqué de esa distinción.
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -38,7 +49,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgres
       JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
       FRONTEND_URL: http://localhost
-      # IP LAN real de la máquina host, detectada por iniciar_servidor.bat antes de
+      # IP LAN real de la máquina host, detectada por iniciar_sistema.bat antes de
       # levantar los contenedores (dentro del contenedor solo se vería la IP interna de Docker).
       HOST_LAN_IP: ${HOST_LAN_IP:-127.0.0.1}
     depends_on:
