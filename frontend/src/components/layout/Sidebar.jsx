@@ -15,6 +15,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import NetworkInfoBanner from './NetworkInfoBanner';
 
 const navItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -130,6 +131,7 @@ export default function Sidebar({ drawerWidth, collapsedWidth = 64, collapsed = 
 
       {!isCollapsed && (
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <NetworkInfoBanner />
           <Typography variant="caption" color="text.secondary">
             v1.0.0 © 2025 UTS
           </Typography>
