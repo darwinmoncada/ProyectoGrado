@@ -14,6 +14,10 @@ import java.util.List;
 public class AssetSpecification {
 
     public static Specification<Asset> searchAssets(String search, AssetStatus status, Long areaId, Long typeId) {
+        return searchAssets(search, status, areaId, typeId, null);
+    }
+
+    public static Specification<Asset> searchAssets(String search, AssetStatus status, Long areaId, Long typeId, String brand) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -41,6 +45,11 @@ public class AssetSpecification {
             // Filtro por tipo de activo
             if (typeId != null) {
                 predicates.add(cb.equal(root.get("assetType").get("id"), typeId));
+            }
+
+            // Filtro por marca
+            if (brand != null && !brand.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("brand")), "%" + brand.toLowerCase() + "%"));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

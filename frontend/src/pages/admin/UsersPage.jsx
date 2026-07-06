@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  Box, Typography, Paper, Chip, IconButton, Tooltip, Button,
+  Box, Typography, Paper, Chip, IconButton, Tooltip, Button, Avatar,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField,
   FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
@@ -34,6 +34,17 @@ const ROLE_RANK = {
 function getUserRank(user) {
   const ranks = (user.roles || []).map((r) => ROLE_RANK[r] || 99);
   return ranks.length ? Math.min(...ranks) : 99;
+}
+
+function getInitials(fullName) {
+  if (!fullName) return '?';
+  const parts = fullName.trim().split(/\s+/);
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
+}
+
+function getUserAvatarColor(user) {
+  const primaryRole = (user.roles || []).sort((a, b) => (ROLE_RANK[a] || 99) - (ROLE_RANK[b] || 99))[0];
+  return ROLE_CHIP_STYLE[primaryRole]?.color || '#6B7280';
 }
 
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]+$/;
@@ -213,7 +224,21 @@ export default function UsersPage() {
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 60 },
-    { field: 'fullName', headerName: 'Nombre Completo', flex: 1 },
+    {
+      field: 'fullName', headerName: 'Nombre Completo', flex: 1, minWidth: 200,
+      renderCell: ({ row }) => (
+        <Box display="flex" alignItems="center" gap={1.25} height="100%">
+          <Avatar sx={{
+            width: 30, height: 30, fontSize: 13, fontWeight: 700,
+            bgcolor: (theme) => `${getUserAvatarColor(row)}${theme.palette.mode === 'dark' ? '40' : '22'}`,
+            color: getUserAvatarColor(row),
+          }}>
+            {getInitials(row.fullName)}
+          </Avatar>
+          <Typography variant="body2">{row.fullName}</Typography>
+        </Box>
+      ),
+    },
     { field: 'username', headerName: 'Usuario', width: 140 },
     { field: 'email', headerName: 'Correo', flex: 1 },
     { field: 'phone', headerName: 'Teléfono', width: 130 },

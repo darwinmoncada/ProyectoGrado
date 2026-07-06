@@ -37,11 +37,12 @@ public class AuditController {
             @RequestParam(required = false) String entityType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) String username,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
         return ResponseEntity.ok(ApiResponse.success(
-                auditService.searchLogs(userId, action, entityType, from, to, pageable)));
+                auditService.searchLogs(userId, action, entityType, from, to, username, pageable)));
     }
 }

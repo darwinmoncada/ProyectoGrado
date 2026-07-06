@@ -15,6 +15,15 @@ export const ASSET_STATUS_COLORS = {
   LOST: 'error',
 };
 
+// Chip "outlined" con fondo semitransparente según semántica — se ve bien en claro y oscuro
+// porque el color se mezcla por alpha en vez de depender de un hex sólido fijo.
+export const ASSET_STATUS_OUTLINED_STYLE = {
+  ACTIVE: { color: '#2E7D32', borderColor: 'rgba(46,125,50,0.5)', bgcolor: 'rgba(46,125,50,0.12)' },
+  MAINTENANCE: { color: '#F57C00', borderColor: 'rgba(245,124,0,0.5)', bgcolor: 'rgba(245,124,0,0.12)' },
+  RETIRED: { color: 'text.secondary', borderColor: 'divider', bgcolor: 'action.hover' },
+  LOST: { color: '#C62828', borderColor: 'rgba(198,40,40,0.5)', bgcolor: 'rgba(198,40,40,0.12)' },
+};
+
 export const MOVEMENT_TYPE_LABELS = {
   ENTRY: 'Entrada',
   EXIT: 'Salida',
@@ -69,6 +78,18 @@ export const AUDIT_ACTION_COLORS = {
   IMPORT: 'info',
 };
 
+// Color sólido de franja lateral por acción (barra de color en la vista de Auditoría).
+export const AUDIT_ACTION_STRIPE_COLOR = {
+  CREATE: '#2E7D32',
+  UPDATE: '#F57C00',
+  DELETE: '#C62828',
+  LOGIN: '#0288D1',
+  LOGOUT: '#78909C',
+  VIEW: '#78909C',
+  EXPORT: '#0288D1',
+  IMPORT: '#0288D1',
+};
+
 export const CONNECTION_TYPE_LABELS = {
   ETHERNET: 'Ethernet',
   WIFI: 'Wi-Fi',
@@ -92,9 +113,12 @@ export const ROLE_LABELS = {
   ROLE_USUARIO: 'Usuario Estándar',
 };
 
+// Fondo semitransparente (rgba) en vez de hex sólido: se ve bien tanto en modo claro
+// como oscuro, porque el color de fondo se mezcla por alpha sobre el fondo real del tema,
+// mientras el texto conserva un tono saturado con buen contraste en ambos casos.
 export const ROLE_CHIP_STYLE = {
-  ROLE_SUPERADMIN: { bgcolor: '#EEF2F6', color: '#4F46E5', fontWeight: 700 },
-  ROLE_ADMIN: { bgcolor: '#E6F4EA', color: '#0D9488', fontWeight: 600 },
-  ROLE_TECNICO: { bgcolor: '#E8F0FE', color: '#1A73E8', fontWeight: 600 },
-  ROLE_USUARIO: { bgcolor: '#F3F4F6', color: '#6B7280', fontWeight: 600 },
+  ROLE_SUPERADMIN: { bgcolor: 'rgba(79,70,229,0.16)', color: '#4F46E5', fontWeight: 700, border: '1px solid rgba(79,70,229,0.4)' },
+  ROLE_ADMIN: { bgcolor: 'rgba(13,148,136,0.16)', color: '#0D9488', fontWeight: 600, border: '1px solid rgba(13,148,136,0.4)' },
+  ROLE_TECNICO: { bgcolor: 'rgba(26,115,232,0.16)', color: '#1A73E8', fontWeight: 600, border: '1px solid rgba(26,115,232,0.4)' },
+  ROLE_USUARIO: { bgcolor: 'rgba(107,114,128,0.16)', color: '#6B7280', fontWeight: 600, border: '1px solid rgba(107,114,128,0.4)' },
 };

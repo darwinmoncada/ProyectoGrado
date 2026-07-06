@@ -98,20 +98,24 @@ docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/dump_neon.s
 Si usaste pgAdmin/DBeaver para generar el `.sql`, el mismo par de comandos funciona
 apuntando al nombre de ese archivo.
 
+> ⚠️ **Verifica siempre después de importar**, sin importar el método que uses. En este
+> proyecto encontramos que un mismo comando puede funcionar bien una vez y corromper
+> tildes con una mojibake distinta otra vez (bytes UTF-8 reinterpretados como una codepage
+> de 8 bits antes de volver a guardarse), sin poder aislar con certeza la causa exacta.
+> Corre esta consulta después de importar — si devuelve 0 filas, todo quedó bien:
+>
+> ```sql
+> SELECT name FROM areas WHERE name LIKE '%?%' OR name LIKE '%├%' OR name LIKE '%┬%';
+> ```
+
 ### Si los datos ya quedaron con tildes corruptas (`Almac??n`, `C??mara`, etc.)
 
-Si importaste un dump con el método antiguo (con `<` en PowerShell) antes de esta guía, usa
-el script de reparación `reparar_tildes.sql` incluido en la raíz del proyecto — corrige por
-diccionario los patrones de corrupción conocidos sin necesidad de reimportar nada:
-
-```powershell
-docker cp reparar_tildes.sql inventario_db:/tmp/reparar_tildes.sql
-docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/reparar_tildes.sql
-```
-
-Es idempotente: puedes ejecutarlo más de una vez sin efectos secundarios. Al final imprime
-una consulta de verificación — si no devuelve filas, ya no queda ningún `?` corrupto en
-`areas`, `asset_types` ni `assets`.
+Usa el script de reparación `reparar_tildes.sql` incluido en la raíz del proyecto — corrige
+por diccionario los patrones de corrupción conocidos sin necesidad de reimportar nada. Lee
+su encabezado antes de correrlo: documenta un caso real donde `psql -f` re-corrompió las
+tildes de reemplazo, y por qué el método más confiable es aplicarlo con un script Node.js +
+`pg` (node-postgres) en vez de psql. Sea cual sea el método, **verifica con la consulta de
+arriba inmediatamente después** — no asumas que funcionó solo porque no hubo errores.
 
 ## Paso 4 — Iniciar el sistema completo
 

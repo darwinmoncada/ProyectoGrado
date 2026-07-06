@@ -46,5 +46,8 @@ public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecific
     @Query("SELECT a.area.name as area, COUNT(a) as count FROM Asset a WHERE a.area IS NOT NULL GROUP BY a.area.name")
     List<Object[]> countByArea();
 
+    @Query("SELECT a.area.id as areaId, COUNT(a) as count FROM Asset a WHERE a.area IS NOT NULL GROUP BY a.area.id")
+    List<Object[]> countByAreaId();
+
     List<Asset> findByAreaIdAndStatus(Long areaId, AssetStatus status);
 }

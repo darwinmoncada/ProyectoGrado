@@ -8,6 +8,7 @@ import com.uts.inventario.entity.Area;
 import com.uts.inventario.entity.AssetType;
 import com.uts.inventario.exception.ResourceNotFoundException;
 import com.uts.inventario.repository.AreaRepository;
+import com.uts.inventario.repository.AssetRepository;
 import com.uts.inventario.repository.AssetTypeRepository;
 import com.uts.inventario.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -31,6 +34,7 @@ public class UserController {
     private final UserService userService;
     private final AreaRepository areaRepository;
     private final AssetTypeRepository assetTypeRepository;
+    private final AssetRepository assetRepository;
 
     // ---- Usuarios ----
 
@@ -119,6 +123,27 @@ public class UserController {
         area.setFloor(request.getFloor());
         area.setBuilding(request.getBuilding());
         return ResponseEntity.ok(ApiResponse.success("Área actualizada", areaRepository.save(area)));
+    }
+
+    @DeleteMapping("/areas/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @Operation(summary = "Desactivar área (baja lógica; los activos asignados no se pierden)")
+    public ResponseEntity<ApiResponse<Void>> deleteArea(@PathVariable Long id) {
+        Area area = areaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Área no encontrada: " + id));
+        area.setIsActive(false);
+        areaRepository.save(area);
+        return ResponseEntity.ok(ApiResponse.success("Área desactivada", null));
+    }
+
+    @GetMapping("/areas/asset-counts")
+    @Operation(summary = "Cantidad de activos asignados por área")
+    public ResponseEntity<ApiResponse<Map<Long, Long>>> getAreaAssetCounts() {
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : assetRepository.countByAreaId()) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return ResponseEntity.ok(ApiResponse.success(counts));
     }
 
     // ---- Tipos de activos ----

@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import {
   Box, Button, Chip, Typography, TextField, MenuItem,
-  Select, FormControl, InputLabel, IconButton, Tooltip, Paper
+  Select, FormControl, InputLabel, IconButton, Tooltip, Paper,
+  Accordion, AccordionSummary, AccordionDetails, Badge,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { assetService } from '../../services/assetService';
 import { useAuth } from '../../context/AuthContext';
-import { ASSET_STATUS_LABELS, ASSET_STATUS_COLORS } from '../../constants/labels';
+import { ASSET_STATUS_LABELS, ASSET_STATUS_OUTLINED_STYLE } from '../../constants/labels';
 import EmptyValue from '../../components/common/EmptyValue';
 import PdfExportMenu from '../../components/common/PdfExportMenu';
 import { downloadBlob, extractBlobErrorMessage } from '../../utils/fileDownload';
@@ -24,7 +27,9 @@ export default function AssetListPage() {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const [filters, setFilters] = useState({ search: '', status: '', page: 0, size: 10 });
+  const [filters, setFilters] = useState({
+    search: '', status: '', typeId: '', areaId: '', brand: '', page: 0, size: 10,
+  });
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [exportingPdf, setExportingPdf] = useState(false);
 
@@ -33,9 +38,22 @@ export default function AssetListPage() {
     queryFn: () => assetService.getAll({
       search: filters.search || undefined,
       status: filters.status || undefined,
+      typeId: filters.typeId || undefined,
+      areaId: filters.areaId || undefined,
+      brand: filters.brand || undefined,
       page: filters.page,
       size: filters.size,
     }),
+  });
+
+  const { data: assetTypes = [] } = useQuery({ queryKey: ['assetTypes'], queryFn: assetService.getTypes });
+  const { data: areas = [] } = useQuery({ queryKey: ['areas'], queryFn: assetService.getAreas });
+
+  const activeFilterCount = ['search', 'status', 'typeId', 'areaId', 'brand']
+    .filter((key) => !!filters[key]).length;
+
+  const clearFilters = () => setFilters({
+    search: '', status: '', typeId: '', areaId: '', brand: '', page: 0, size: filters.size,
   });
 
   const deleteMutation = useMutation({
@@ -141,7 +159,12 @@ export default function AssetListPage() {
       headerName: 'Estado',
       width: 150,
       renderCell: ({ value }) => (
-        <Chip label={ASSET_STATUS_LABELS[value] || value} color={ASSET_STATUS_COLORS[value]} size="small" />
+        <Chip
+          variant="outlined"
+          label={ASSET_STATUS_LABELS[value] || value}
+          sx={ASSET_STATUS_OUTLINED_STYLE[value]}
+          size="small"
+        />
       ),
     },
     {
@@ -232,31 +255,78 @@ export default function AssetListPage() {
         </Box>
       </Box>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <TextField
-            label="Buscar"
-            size="small"
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 0 })}
-            placeholder="Nombre, serial, código..."
-            sx={{ minWidth: 220 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              value={filters.status}
-              label="Estado"
-              onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 0 })}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
-                <MenuItem key={value} value={value}>{label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Paper>
+      <Accordion defaultExpanded sx={{ mb: 2, '&:before': { display: 'none' } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Badge badgeContent={activeFilterCount} color="primary">
+              <FilterListIcon fontSize="small" color="action" />
+            </Badge>
+            <Typography variant="subtitle2" fontWeight={600}>Criterios de Búsqueda</Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+            <TextField
+              label="Buscar"
+              size="small"
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 0 })}
+              placeholder="Nombre, serial, código..."
+              sx={{ minWidth: 220 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={filters.status}
+                label="Estado"
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 0 })}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                value={filters.typeId}
+                label="Tipo"
+                onChange={(e) => setFilters({ ...filters, typeId: e.target.value, page: 0 })}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {assetTypes.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Área</InputLabel>
+              <Select
+                value={filters.areaId}
+                label="Área"
+                onChange={(e) => setFilters({ ...filters, areaId: e.target.value, page: 0 })}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {areas.map((a) => (
+                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Marca"
+              size="small"
+              value={filters.brand}
+              onChange={(e) => setFilters({ ...filters, brand: e.target.value, page: 0 })}
+              placeholder="Ej. Dahua, TP-Link..."
+              sx={{ minWidth: 180 }}
+            />
+            {activeFilterCount > 0 && (
+              <Button size="small" onClick={clearFilters}>Limpiar filtros</Button>
+            )}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
       <Paper>
         <DataGrid

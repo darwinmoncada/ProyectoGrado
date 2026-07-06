@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem, Chip } from '@mui/material';
+import { Box, Typography, Paper, FormControl, InputLabel, Select, MenuItem, Chip, TextField } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
 import {
-  AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, ENTITY_TYPE_LABELS,
+  AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, AUDIT_ACTION_STRIPE_COLOR, ENTITY_TYPE_LABELS,
   ROLE_LABELS, ROLE_CHIP_STYLE,
 } from '../../constants/labels';
 import EmptyValue from '../../components/common/EmptyValue';
@@ -40,8 +41,10 @@ function buildAuditDescription(row) {
   }
 }
 
+const MONO_FONT = '"Roboto Mono", "Consolas", monospace';
+
 export default function AuditPage() {
-  const [filters, setFilters] = useState({ action: '', entityType: '', page: 0 });
+  const [filters, setFilters] = useState({ action: '', entityType: '', username: '', from: null, to: null, page: 0 });
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['audit', filters],
@@ -49,6 +52,9 @@ export default function AuditPage() {
       params: {
         action: filters.action || undefined,
         entityType: filters.entityType || undefined,
+        username: filters.username || undefined,
+        from: filters.from ? filters.from.startOf('day').toISOString() : undefined,
+        to: filters.to ? filters.to.endOf('day').toISOString() : undefined,
         page: filters.page,
         size: 20,
       }
@@ -90,14 +96,21 @@ export default function AuditPage() {
       field: 'entityDescription', headerName: 'Descripción', flex: 1, minWidth: 320,
       renderCell: ({ row }) => buildAuditDescription(row),
     },
-    { field: 'ipAddress', headerName: 'IP', width: 130 },
+    {
+      field: 'ipAddress', headerName: 'IP', width: 130,
+      renderCell: ({ value }) => <Box component="span" sx={{ fontFamily: MONO_FONT, fontSize: 13 }}>{value || <EmptyValue />}</Box>,
+    },
     {
       field: 'success', headerName: 'Éxito', width: 80,
       renderCell: ({ value }) => <Chip label={value ? 'Sí' : 'No'} color={value ? 'success' : 'error'} size="small" />
     },
     {
       field: 'timestamp', headerName: 'Fecha/Hora', width: 170,
-      valueFormatter: ({ value }) => value ? new Date(value).toLocaleString('es-CO') : 'N/A'
+      renderCell: ({ value }) => (
+        <Box component="span" sx={{ fontFamily: MONO_FONT, fontSize: 12.5 }}>
+          {value ? new Date(value).toLocaleString('es-CO') : 'N/A'}
+        </Box>
+      ),
     },
   ];
 
@@ -105,7 +118,14 @@ export default function AuditPage() {
     <Box>
       <Typography variant="h5" fontWeight={700} mb={3}>Registros de Auditoría</Typography>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Box display="flex" gap={2} flexWrap="wrap">
+        <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+          <TextField
+            label="Buscar por usuario"
+            size="small"
+            value={filters.username}
+            onChange={(e) => setFilters({ ...filters, username: e.target.value, page: 0 })}
+            sx={{ minWidth: 180 }}
+          />
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Acción</InputLabel>
             <Select value={filters.action} label="Acción"
@@ -126,6 +146,18 @@ export default function AuditPage() {
               ))}
             </Select>
           </FormControl>
+          <DatePicker
+            label="Desde"
+            value={filters.from}
+            onChange={(value) => setFilters({ ...filters, from: value, page: 0 })}
+            slotProps={{ textField: { size: 'small', sx: { minWidth: 160 } } }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={filters.to}
+            onChange={(value) => setFilters({ ...filters, to: value, page: 0 })}
+            slotProps={{ textField: { size: 'small', sx: { minWidth: 160 } } }}
+          />
         </Box>
       </Paper>
       <Paper>
@@ -140,7 +172,16 @@ export default function AuditPage() {
           pageSizeOptions={[20]}
           disableRowSelectionOnClick
           autoHeight
-          sx={{ border: 0 }}
+          getRowClassName={(params) => `audit-action-${params.row.action}`}
+          sx={{
+            border: 0,
+            ...Object.fromEntries(
+              Object.entries(AUDIT_ACTION_STRIPE_COLOR).map(([action, color]) => [
+                `& .audit-action-${action}`,
+                { borderLeft: `3px solid ${color}` },
+              ])
+            ),
+          }}
         />
       </Paper>
     </Box>

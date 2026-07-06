@@ -43,6 +43,7 @@ public class AssetController {
             @RequestParam(required = false) AssetStatus status,
             @RequestParam(required = false) Long areaId,
             @RequestParam(required = false) Long typeId,
+            @RequestParam(required = false) String brand,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -53,7 +54,7 @@ public class AssetController {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         return ResponseEntity.ok(ApiResponse.success(
-                assetService.findAll(search, status, areaId, typeId, pageable)));
+                assetService.findAll(search, status, areaId, typeId, brand, pageable)));
     }
 
     @GetMapping("/{id}")

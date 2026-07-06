@@ -1,8 +1,11 @@
-import { Grid, Card, CardContent, Typography, Box, Skeleton } from '@mui/material';
+import { Grid, Card, CardContent, Typography, Box, Skeleton, useTheme } from '@mui/material';
+import {
+  Timeline, TimelineItem, TimelineSeparator, TimelineDot,
+  TimelineConnector, TimelineContent, TimelineOppositeContent,
+} from '@mui/lab';
 import ComputerIcon from '@mui/icons-material/Computer';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import InventoryIcon from '@mui/icons-material/Inventory';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -11,13 +14,36 @@ import {
 import { assetService } from '../services/assetService';
 import { networkService } from '../services/networkService';
 import { inventoryService } from '../services/inventoryService';
-import { MOVEMENT_TYPE_LABELS } from '../constants/labels';
+import { MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_COLORS } from '../constants/labels';
 import EmptyValue from '../components/common/EmptyValue';
 import StatCard from '../components/common/StatCard';
 
-const COLORS = ['#1565C0', '#F57F17'];
+const PIE_COLORS = ['#1565C0', '#F57F17'];
+const TIMELINE_DOT_COLOR = {
+  success: '#2E7D32', error: '#C62828', info: '#0288D1',
+  warning: '#F57C00', default: 'grey',
+};
+
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <Box sx={{
+      bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider',
+      borderRadius: 1.5, px: 1.5, py: 1, boxShadow: 4,
+    }}>
+      {label && <Typography variant="caption" fontWeight={700} display="block">{label}</Typography>}
+      {payload.map((p, i) => (
+        <Typography key={i} variant="body2" sx={{ color: p.color || p.payload?.fill }}>
+          {p.name}: <strong>{p.value}</strong>
+        </Typography>
+      ))}
+    </Box>
+  );
+}
 
 export default function DashboardPage() {
+  const theme = useTheme();
+
   const { data: assetStats, isLoading: loadingAssets } = useQuery({
     queryKey: ['assetStats'],
     queryFn: assetService.getStats,
@@ -34,7 +60,8 @@ export default function DashboardPage() {
   });
 
   const byTypeData = assetStats?.byType?.map(([type, count]) => ({ name: type, value: count })) || [];
-  const byAreaData = assetStats?.byArea?.map(([area, count]) => ({ name: area, value: count })) || [];
+  const axisTick = { fill: theme.palette.text.secondary, fontSize: 11 };
+  const legendStyle = { color: theme.palette.text.primary, fontSize: 13 };
 
   return (
     <Box>
@@ -43,29 +70,29 @@ export default function DashboardPage() {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Total Activos"
             value={assetStats?.total ?? '—'}
-            icon={<ComputerIcon sx={{ color: '#1565C0', fontSize: 32 }} />}
+            icon={<ComputerIcon sx={{ fontSize: 40 }} />}
             color="#1565C0"
             loading={loadingAssets}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Dispositivos En Línea"
             value={networkStats?.online ?? '—'}
-            icon={<WifiIcon sx={{ color: '#2E7D32', fontSize: 32 }} />}
+            icon={<WifiIcon sx={{ fontSize: 40 }} />}
             color="#2E7D32"
             loading={loadingNetwork}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             title="Dispositivos Fuera de Línea"
             value={networkStats?.offline ?? '—'}
-            icon={<WifiOffIcon sx={{ color: '#C62828', fontSize: 32 }} />}
+            icon={<WifiOffIcon sx={{ fontSize: 40 }} />}
             color="#C62828"
             loading={loadingNetwork}
           />
@@ -78,7 +105,7 @@ export default function DashboardPage() {
               <Typography variant="h6" mb={2}>Activos por Tipo</Typography>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={byTypeData} margin={{ top: 5, right: 20, bottom: 70, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                   <XAxis
                     dataKey="name"
                     angle={-45}
@@ -87,11 +114,11 @@ export default function DashboardPage() {
                     dx={-10}
                     dy={10}
                     height={70}
-                    tick={{ fontSize: 11 }}
+                    tick={axisTick}
                   />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="value" name="Cantidad" fill="#1565C0" radius={[4, 4, 0, 0]} />
+                  <YAxis allowDecimals={false} tick={axisTick} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: theme.palette.action.hover }} />
+                  <Bar dataKey="value" name="Cantidad" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -118,9 +145,10 @@ export default function DashboardPage() {
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
-                      {COLORS.map((color, i) => <Cell key={i} fill={color} />)}
+                      {PIE_COLORS.map((color, i) => <Cell key={i} fill={color} />)}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Legend wrapperStyle={legendStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -128,40 +156,44 @@ export default function DashboardPage() {
           </Card>
         </Grid>
 
-        {/* Últimos movimientos */}
+        {/* Últimos movimientos: línea de tiempo */}
         <Grid item xs={12}>
           <Card>
             <CardContent>
-              <Typography variant="h6" mb={2}>Últimos Movimientos de Inventario</Typography>
+              <Typography variant="h6" mb={1}>Últimos Movimientos de Inventario</Typography>
               {loadingMovements ? (
                 [...Array(3)].map((_, i) => <Skeleton key={i} height={40} sx={{ mb: 1 }} />)
+              ) : !recentMovements?.length ? (
+                <Typography color="text.secondary" sx={{ py: 2 }}>Sin movimientos registrados.</Typography>
               ) : (
-                <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <Box component="thead">
-                    <Box component="tr" sx={{ borderBottom: '2px solid', borderColor: 'divider' }}>
-                      {['Activo', 'Tipo', 'Área Destino', 'Fecha', 'Motivo'].map((h) => (
-                        <Box key={h} component="th" sx={{ p: 1, textAlign: 'left', fontSize: 13, fontWeight: 600 }}>
-                          {h}
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                  <Box component="tbody">
-                    {recentMovements?.map((m) => (
-                      <Box key={m.id} component="tr" sx={{ borderBottom: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.asset?.name}</Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>
-                          {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
-                        </Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.toArea?.name || <EmptyValue />}</Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>
+                <Timeline sx={{ px: 0, m: 0, [`& .MuiTimelineItem-root:before`]: { flex: 0, p: 0 } }}>
+                  {recentMovements.map((m, i) => {
+                    const dotColor = TIMELINE_DOT_COLOR[MOVEMENT_TYPE_COLORS[m.movementType]] || 'grey';
+                    return (
+                      <TimelineItem key={m.id}>
+                        <TimelineOppositeContent sx={{ flex: 0.25, py: 1.5 }} color="text.secondary" variant="body2">
                           {new Date(m.movementDate).toLocaleDateString('es-CO')}
-                        </Box>
-                        <Box component="td" sx={{ p: 1, fontSize: 13 }}>{m.reason || <EmptyValue>Sin especificar</EmptyValue>}</Box>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
+                        </TimelineOppositeContent>
+                        <TimelineSeparator>
+                          <TimelineDot sx={{ bgcolor: dotColor }} />
+                          {i < recentMovements.length - 1 && <TimelineConnector />}
+                        </TimelineSeparator>
+                        <TimelineContent sx={{ py: 1.5 }}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {m.asset?.name || <EmptyValue />}
+                            <Typography component="span" variant="body2" color="text.secondary" ml={1}>
+                              {MOVEMENT_TYPE_LABELS[m.movementType] || m.movementType}
+                            </Typography>
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {m.toArea?.name ? `→ ${m.toArea.name}` : 'Sin área destino'}
+                            {m.reason ? ` · ${m.reason}` : ''}
+                          </Typography>
+                        </TimelineContent>
+                      </TimelineItem>
+                    );
+                  })}
+                </Timeline>
               )}
             </CardContent>
           </Card>

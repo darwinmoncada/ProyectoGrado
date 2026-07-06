@@ -84,8 +84,13 @@ public class AuditService {
 
     public PageResponse<AuditLogResponse> searchLogs(Long userId, AuditAction action, String entityType,
                                                        LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        return searchLogs(userId, action, entityType, from, to, null, pageable);
+    }
+
+    public PageResponse<AuditLogResponse> searchLogs(Long userId, AuditAction action, String entityType,
+                                                       LocalDateTime from, LocalDateTime to, String username, Pageable pageable) {
         Page<AuditLog> result = auditLogRepository.findAll(
-                AuditLogSpecification.searchLogs(userId, action, entityType, from, to), pageable);
+                AuditLogSpecification.searchLogs(userId, action, entityType, from, to, username), pageable);
         return PageResponse.from(result.map(this::toResponse));
     }
 

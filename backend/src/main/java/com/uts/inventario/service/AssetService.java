@@ -35,7 +35,13 @@ public class AssetService {
 
     public PageResponse<AssetResponse> findAll(String search, AssetStatus status,
                                                 Long areaId, Long typeId, Pageable pageable) {
-        Page<Asset> page = assetRepository.findAll(AssetSpecification.searchAssets(search, status, areaId, typeId), pageable);
+        return findAll(search, status, areaId, typeId, null, pageable);
+    }
+
+    public PageResponse<AssetResponse> findAll(String search, AssetStatus status, Long areaId,
+                                                Long typeId, String brand, Pageable pageable) {
+        Page<Asset> page = assetRepository.findAll(
+                AssetSpecification.searchAssets(search, status, areaId, typeId, brand), pageable);
         return PageResponse.from(page.map(this::toResponse));
     }
 

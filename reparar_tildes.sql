@@ -15,16 +15,35 @@
 -- así que el script es idempotente: correrlo dos veces no tiene efecto
 -- adicional una vez corregidos los datos.
 --
--- MODO DE USO SEGURO (no uses "< reparar_tildes.sql" en PowerShell: la
--- redirección puede reinterpretar la codificación del archivo y corromper las
--- tildes de reemplazo antes de que lleguen a Postgres). En su lugar:
+-- ⚠️ LECCIÓN APRENDIDA (importante): la primera vez que se aplicó este script,
+-- las tildes de reemplazo terminaron con una mojibake distinta y más rara
+-- ("Almacén" → "Almac├®n", "Cámara" → "C├ímara") — bytes UTF-8 reinterpretados
+-- como CP850 (una codepage de DOS) y vueltos a guardar como UTF-8. No se pudo
+-- aislar con certeza cuál paso exacto de la tubería (psql, la consola, o el
+-- propio archivo en un momento dado) causó la reinterpretación, así que la
+-- lección práctica es: **no confíes ciegamente en ningún método** — siempre
+-- verifica byte a byte después de aplicar un fix de codificación:
+--
+--   SELECT name FROM areas WHERE name LIKE '%├%' OR name LIKE '%┬%' OR name LIKE '%?%';
+--   -- (0 filas esperado; si aparece algo, no quedó bien)
+--
+-- El método más robusto encontrado fue NO usar psql para el UPDATE en sí, sino
+-- un cliente que hable el protocolo binario de Postgres directamente en UTF-8
+-- (Node.js + "pg"/node-postgres), evitando por completo cualquier capa de
+-- texto de terminal/shell en el camino:
+--
+--   const { Client } = require('pg');
+--   const client = new Client({ host: 'postgres', user: 'postgres',
+--     password: 'postgres', database: 'inventario_uts' });
+--   await client.connect();
+--   await client.query("UPDATE areas SET name = replace(name, 'Almac??n', 'Almacén') WHERE name LIKE '%Almac??n%'");
+--   // ... etc., una query por cada UPDATE de este archivo
+--
+-- Si prefieres psql, hazlo bajo tu propio riesgo y SIEMPRE re-verifica con la
+-- consulta de arriba inmediatamente después:
 --
 --   docker cp reparar_tildes.sql inventario_db:/tmp/reparar_tildes.sql
---   docker exec inventario_db psql -U postgres -d inventario_uts -f /tmp/reparar_tildes.sql
---
--- "docker cp" copia los bytes del archivo tal cual (sin pasar por la consola
--- de PowerShell), y "psql -f" lo lee directamente desde el filesystem del
--- contenedor.
+--   docker exec -e PGCLIENTENCODING=UTF8 inventario_db psql -U postgres -d inventario_uts -f /tmp/reparar_tildes.sql
 -- ============================================================================
 
 BEGIN;

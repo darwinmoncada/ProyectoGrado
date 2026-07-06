@@ -12,12 +12,22 @@ import java.util.List;
 public class AuditLogSpecification {
 
     public static Specification<AuditLog> searchLogs(Long userId, AuditAction action, String entityType, LocalDateTime from, LocalDateTime to) {
+        return searchLogs(userId, action, entityType, from, to, null);
+    }
+
+    public static Specification<AuditLog> searchLogs(Long userId, AuditAction action, String entityType,
+                                                       LocalDateTime from, LocalDateTime to, String username) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Filtro por usuario
             if (userId != null) {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
+            }
+
+            // Búsqueda por nombre de usuario (texto libre, snapshot guardado en el propio log)
+            if (username != null && !username.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("username")), "%" + username.toLowerCase() + "%"));
             }
 
             // Filtro por acción
